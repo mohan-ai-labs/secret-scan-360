@@ -1,5 +1,4 @@
 services:
-
   postgres:
     image: postgres:16-alpine
     environment:
@@ -8,45 +7,60 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    networks: [appnet]
-
-  litellm:
-    image: ghcr.io/berriai/litellm:main
-    environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      LITELLM_CONFIG: /app/config.yaml  
-    command: [
-              "bash","-lc",
-              "rm -f /app/config.yaml /workspace/config.yaml 2>/dev/null || true; \
-               exec litellm --host 0.0.0.0 --port 4000 --num_workers 1 \
-               --model openai/gpt-4o-mini --drop_params true --set_verbose true"
-             ]
-    volumes:
-      - ./ops/litellm/config.yaml:/app/config.yaml:ro
-    ports:
-      - "4000:4000"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ss360} -d ${POSTGRES_DB:-ss360}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
     networks: [appnet]
 
   agents:
-    build: ./services/agents
+    build:
+      context: .                     # repo root as build context
+      dockerfile: services/agents/Dockerfile
+    container_name: ss360-agents
     environment:
-      LOG_LEVEL: ${LOG_LEVEL}
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      # Optional, only used if you enable LLM verification in agents
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      MODEL_NAME: gpt-4o-mini
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "8080:8080"                  # expose for host testing; remove if not needed
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      postgres:
+        condition: service_started   # agents do not require DB, but wait for network
+    restart: unless-stopped
     networks: [appnet]
-    depends_on: [postgres, litellm]
 
   api:
-    build: ./services/api
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
     ports:
       - "8000:8000"
     environment:
-      LOG_LEVEL: ${LOG_LEVEL}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      LITELLM_URL: http://litellm:4000/v1
-      MODEL_NAME: openai/gpt-4o-mini
-    depends_on: [agents, postgres, litellm]
+      # Agents URL inside the docker network
+      AGENTS_URL: http://agents:8080
+      # Optional OpenAI key if API layer ever needs it (not required now)
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      agents:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
     networks: [appnet]
 
 volumes:
@@ -55,3 +69,4 @@ volumes:
 networks:
   appnet:
     driver: bridge
+
