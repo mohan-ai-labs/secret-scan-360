@@ -3,3 +3,8 @@ pgdata/
 __pycache__/
 *.zip
 .DS_Store
+.env
+pgdata/
+__pycache__/
+*.zip
+.DS_Store
