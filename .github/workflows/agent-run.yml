@@ -1,0 +1,56 @@
+name: Agent Run (Scan & Report)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Agent working branch"
+        required: false
+        default: "agent/scan-and-report"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install agent deps
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install -r agents/crew/requirements.txt
+
+      - name: Run agent (scan & report)
+        env:
+          # make commits under YOUR identity (not a bot)
+          GIT_AUTHOR_NAME: "Mohan Krishna Alavala"
+          GIT_AUTHOR_EMAIL: "YOUR_GITHUB_EMAIL"
+          GIT_COMMITTER_NAME: "Mohan Krishna Alavala"
+          GIT_COMMITTER_EMAIL: "YOUR_GITHUB_EMAIL"
+
+          # OpenAI + GitHub
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # Agent config
+          AGENT_BRANCH: ${{ github.event.inputs.branch }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+
+          # SS360 API (your VM)
+          SS360_API_BASE: ${{ secrets.SS360_API_BASE }}
+          # SS360_API_TOKEN: ${{ secrets.SS360_API_TOKEN }}   # if you enable auth later
+
+          # For private repos, uncomment next line to scan this repo privately:
+          # SCAN_REPO_URL: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        run: |
+          . .venv/bin/activate
+          python agents/crew/run.py
