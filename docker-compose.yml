@@ -1,0 +1,57 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [appnet]
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      LITELLM_CONFIG: /app/config.yaml  
+    command: [
+              "bash","-lc",
+              "rm -f /app/config.yaml /workspace/config.yaml 2>/dev/null || true; \
+               exec litellm --host 0.0.0.0 --port 4000 --num_workers 1 \
+               --model openai/gpt-4o-mini --drop_params true --set_verbose true"
+             ]
+    volumes:
+      - ./ops/litellm/config.yaml:/app/config.yaml:ro
+    ports:
+      - "4000:4000"
+    networks: [appnet]
+
+  agents:
+    build: ./services/agents
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      MODEL_NAME: gpt-4o-mini
+    networks: [appnet]
+    depends_on: [postgres, litellm]
+
+  api:
+    build: ./services/api
+    ports:
+      - "8000:8000"
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      LITELLM_URL: http://litellm:4000/v1
+      MODEL_NAME: openai/gpt-4o-mini
+    depends_on: [agents, postgres, litellm]
+    networks: [appnet]
+
+volumes:
+  pgdata:
+
+networks:
+  appnet:
+    driver: bridge
