@@ -68,7 +68,7 @@ crew = Crew(agents=[dev], tasks=[filters_task])
 
 
 def main():
-    branch = "agent/feat-api-filters"
+    branch = "${AGENT_BRANCH}"
     ensure_branch("main")
     run(["git", "checkout", "-B", branch])
 
