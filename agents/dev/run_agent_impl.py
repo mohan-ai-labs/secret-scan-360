@@ -5,7 +5,7 @@ This script wires CrewAI agent(s) to implement and commit specific features
 into a feature branch for development.
 """
 
-import os
+
 import subprocess
 from crewai import Agent, Task, Crew
 from dotenv import load_dotenv
@@ -16,9 +16,11 @@ load_dotenv()
 # Git Helpers
 # ---------------------------------------------------------------------------
 
+
 def run(cmd):
     print(f"$ {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
+
 
 def ensure_branch(branch: str):
     run(["git", "fetch", "--all", "--prune"])
@@ -27,6 +29,7 @@ def ensure_branch(branch: str):
     except subprocess.CalledProcessError:
         run(["git", "checkout", "-B", branch])
     run(["git", "pull", "--ff-only", "origin", branch])
+
 
 # ---------------------------------------------------------------------------
 # Agent & Task Setup
@@ -63,6 +66,7 @@ crew = Crew(agents=[dev], tasks=[filters_task])
 # Main Entrypoint
 # ---------------------------------------------------------------------------
 
+
 def main():
     branch = "agent/feat-api-filters"
     ensure_branch("main")
@@ -73,9 +77,41 @@ def main():
     print(result)
 
     run(["git", "add", "-A"])
-    run(["git", "commit", "--allow-empty", "-m", "feat(api): add filters for /scans/latest (agent)"])
+    run(
+        [
+            "git",
+            "commit",
+            "--allow-empty",
+            "-m",
+            "feat(api): add filters for /scans/latest (agent)",
+        ]
+    )
     run(["git", "push", "origin", branch])
+
 
 if __name__ == "__main__":
     main()
 
+
+# Auto-injected task text for current feature
+TASK_TEXT = """\
+# === TASK_TEXT:BEGIN ===
+Wire plugin registry into the scanning pipeline.
+
+Goals:
+1) Construct DetectorRegistry at agents service startup:
+   - Load rules from services/agents/app/config/detectors.yaml if present,
+     else use defaults from detectors.registry.DEFAULT_REGEX_RULES.
+2) Update core scanner to iterate over registered detectors and merge findings.
+3) Update POST /run (agents service) to accept repo_url and return findings produced by detectors.
+4) Keep API response format identical to current /scan expectations (path, kind, match, line, is_secret, reason).
+5) Add a unit test for registry wiring (at least one positive hit from RegexDetector).
+6) Update README with a short 'Detector plugins' section and YAML override example.
+
+Success checks:
+- 'docker compose up -d' stays healthy.
+- 'curl -s -X POST http://localhost:8000/scan -H content-type:application/json -d '{" + '"repo_url":"https://github.com/hashicorp/vault"' + "}' returns findings with kinds from RegexDetector (e.g., 'Private Key').
+# === TASK_TEXT:END ===
+
+
+"""

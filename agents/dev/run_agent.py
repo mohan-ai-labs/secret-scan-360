@@ -7,19 +7,28 @@ from crewai import Agent, Task, Crew
 REPO_ROOT = Path(__file__).resolve().parents[2]  # .../secret-scan-360
 load_dotenv(REPO_ROOT / ".env")
 
+
 def run(cmd, cwd=None):
     print(f"$ {cmd}")
-    res = subprocess.run(cmd, cwd=cwd or REPO_ROOT, shell=True, text=True,
-                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    res = subprocess.run(
+        cmd,
+        cwd=cwd or REPO_ROOT,
+        shell=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
     print(res.stdout)
     if res.returncode != 0:
         raise RuntimeError(f"Command failed: {cmd}")
     return res.stdout
 
+
 def ensure_git_config():
     # Keep commits under Mohan's name
     run('git config user.name "Mohan Krishna Alavala"')
     run('git config user.email "mohankrishnaalavala@users.noreply.github.com"')
+
 
 def create_branch(branch):
     run("git fetch --all --prune")
@@ -27,16 +36,19 @@ def create_branch(branch):
     run("git pull --ff-only origin main")
     run(f"git checkout -B {branch}")
 
+
 def commit_push(branch, message):
     run("git add -A")
     run(f'git commit --allow-empty -m "{message}"')
     run(f"git push -u origin {branch} --force-with-lease")
+
 
 def write_file(relpath: str, content: str):
     path = REPO_ROOT / relpath
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
     print(f"[write] {relpath} ({len(content)} bytes)")
+
 
 # --------------- LLM / Agent -----------------
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
@@ -53,7 +65,8 @@ dev = Agent(
 )
 
 # --------------- Tasks -----------------
-filters_spec = textwrap.dedent("""
+filters_spec = textwrap.dedent(
+    """
 Add query params to GET /scans/latest:
 - limit (default 50, max 200), offset (default 0)
 - repo (substring filter on repo_url)
@@ -67,17 +80,21 @@ Add a minimal smoke-test (or docstring test) so CI can exercise it.
 Success:
 - `curl 'http://localhost:8000/scans/latest?limit=10&offset=0'` returns 200 JSON with an array 'scans'.
 - repo & since filters narrow results.
-""").strip()
+"""
+).strip()
 
-filters_expected = textwrap.dedent("""
+filters_expected = textwrap.dedent(
+    """
 - Modified FastAPI route applying limit/offset/repo/since with validation and sane defaults (limit<=200).
 - SQL uses parameter placeholders.
 - README section with examples for new params.
 - Minimal test/smoke instructions.
 - Commands to run server+test are documented.
-""").strip()
+"""
+).strip()
 
-detectors_spec = textwrap.dedent("""
+detectors_spec = textwrap.dedent(
+    """
 Add 3 detectors under services/agents/app/detectors/ with a central registry:
 1) stripe_keys.py – detect: sk_live_, sk_test_, rk_live_, rk_test_
 2) slack_tokens.py – detect: xoxb-, xoxp-, xoxa-, xoxr-, xoxs-
@@ -92,14 +109,17 @@ Register all in detectors/registry.py so the scanning pipeline uses them.
 Return findings with line and short reason.
 
 Success: scanning a repo containing these patterns yields findings with proper `kind` and reason.
-""").strip()
+"""
+).strip()
 
-detectors_expected = textwrap.dedent("""
+detectors_expected = textwrap.dedent(
+    """
 - New detector modules added; imported by a central registry.
 - Regexes compiled once; safe patterns (no catastrophic backtracking).
 - Findings include line number and reason.
 - Basic test or fixture-based smoke instructions included.
-""").strip()
+"""
+).strip()
 
 filters_task = Task(
     description=filters_spec,
@@ -113,6 +133,7 @@ detectors_task = Task(
     agent=dev,
 )
 
+
 def main():
     ensure_git_config()
 
@@ -121,8 +142,12 @@ def main():
     crew1 = Crew(agents=[dev], tasks=[filters_task])
     out1 = crew1.kickoff()  # <-- no args in current CrewAI
     # Persist the agent output so we have a concrete diff to commit
-    write_file("docs/specs/api_filters.md", f"# API Filters & Pagination – Output\n\n{out1}\n")
-    commit_push("agent/feat-api-filters", "spec(api): filters & pagination (agent output)")
+    write_file(
+        "docs/specs/api_filters.md", f"# API Filters & Pagination – Output\n\n{out1}\n"
+    )
+    commit_push(
+        "agent/feat-api-filters", "spec(api): filters & pagination (agent output)"
+    )
 
     # Branch 2: Detectors
     create_branch("agent/feat-detectors")
@@ -133,6 +158,6 @@ def main():
 
     print("\nDone. Open PRs for both branches on GitHub.")
 
+
 if __name__ == "__main__":
     main()
-

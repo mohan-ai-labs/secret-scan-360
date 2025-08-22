@@ -10,10 +10,14 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 app = FastAPI(title=APP_NAME)
 
 # DB pool (psycopg3)
-pool = ConnectionPool(DATABASE_URL, min_size=1, max_size=4, kwargs={"connect_timeout": 5})
+pool = ConnectionPool(
+    DATABASE_URL, min_size=1, max_size=4, kwargs={"connect_timeout": 5}
+)
+
 
 class ScanInput(BaseModel):
     repo_url: str
+
 
 def persist_scan(repo_url: str, result: dict, started: float, finished: float) -> int:
     findings = result.get("findings", [])
@@ -33,11 +37,11 @@ def persist_scan(repo_url: str, result: dict, started: float, finished: float) -
             rows = [
                 (
                     scan_id,
-                    f.get("path",""),
-                    f.get("kind",""),
-                    f.get("match",""),
+                    f.get("path", ""),
+                    f.get("kind", ""),
+                    f.get("match", ""),
                     bool(f.get("is_secret", False)),
-                    f.get("reason",""),
+                    f.get("reason", ""),
                 )
                 for f in findings
             ]
@@ -51,6 +55,7 @@ def persist_scan(repo_url: str, result: dict, started: float, finished: float) -
         conn.commit()
         return scan_id
 
+
 @app.get("/health")
 def health():
     # quick DB check
@@ -63,11 +68,14 @@ def health():
         db_ok = False
     return {"ok": True, "service": APP_NAME, "db": db_ok}
 
+
 @app.post("/scan")
 def scan(input: ScanInput):
     t0 = time.time()
     try:
-        r = requests.post(f"{AGENTS_URL}/run", json={"repo_url": input.repo_url}, timeout=1800)
+        r = requests.post(
+            f"{AGENTS_URL}/run", json={"repo_url": input.repo_url}, timeout=1800
+        )
         r.raise_for_status()
         result = r.json()
     except Exception as e:
@@ -81,33 +89,70 @@ def scan(input: ScanInput):
         # If DB insert fails, still return the findings
         return {"warning": f"db_error: {e}", **result}
 
+
 # Minimal read APIs
+
 
 @app.get("/scans/latest")
 def latest_scans(limit: int = 10):
     with pool.connection() as conn, conn.cursor() as cur:
-        cur.execute("""
+        cur.execute(
+            """
             SELECT id, repo_url, started_at, finished_at, duration_ms, total_findings, true_hits
             FROM scans ORDER BY id DESC LIMIT %s
-        """, (limit,))
+        """,
+            (limit,),
+        )
         rows = cur.fetchall()
-        return {"scans": [
-            {"id": r[0], "repo_url": r[1], "started_at": r[2], "finished_at": r[3],
-             "duration_ms": r[4], "total_findings": r[5], "true_hits": r[6]}
-            for r in rows
-        ]}
+        return {
+            "scans": [
+                {
+                    "id": r[0],
+                    "repo_url": r[1],
+                    "started_at": r[2],
+                    "finished_at": r[3],
+                    "duration_ms": r[4],
+                    "total_findings": r[5],
+                    "true_hits": r[6],
+                }
+                for r in rows
+            ]
+        }
+
 
 @app.get("/scans/{scan_id}")
 def get_scan(scan_id: int):
     with pool.connection() as conn, conn.cursor() as cur:
-        cur.execute("SELECT id, repo_url, started_at, finished_at, duration_ms, total_findings, true_hits FROM scans WHERE id=%s", (scan_id,))
+        cur.execute(
+            "SELECT id, repo_url, started_at, finished_at, duration_ms, total_findings, true_hits FROM scans WHERE id=%s",
+            (scan_id,),
+        )
         s = cur.fetchone()
         if not s:
             raise HTTPException(status_code=404, detail="scan not found")
-        cur.execute("SELECT path, kind, match, is_secret, reason FROM findings WHERE scan_id=%s ORDER BY id", (scan_id,))
+        cur.execute(
+            "SELECT path, kind, match, is_secret, reason FROM findings WHERE scan_id=%s ORDER BY id",
+            (scan_id,),
+        )
         f = cur.fetchall()
         return {
-            "scan": {"id": s[0], "repo_url": s[1], "started_at": s[2], "finished_at": s[3], "duration_ms": s[4], "total_findings": s[5], "true_hits": s[6]},
-            "findings": [{"path":x[0], "kind":x[1], "match":x[2], "is_secret":x[3], "reason":x[4]} for x in f]
+            "scan": {
+                "id": s[0],
+                "repo_url": s[1],
+                "started_at": s[2],
+                "finished_at": s[3],
+                "duration_ms": s[4],
+                "total_findings": s[5],
+                "true_hits": s[6],
+            },
+            "findings": [
+                {
+                    "path": x[0],
+                    "kind": x[1],
+                    "match": x[2],
+                    "is_secret": x[3],
+                    "reason": x[4],
+                }
+                for x in f
+            ],
         }
-
