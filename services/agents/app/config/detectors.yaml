@@ -1,0 +1,19 @@
+regex_detector:
+  enabled: true
+  rules:
+    - name: "Private Key (RSA)"
+      kind: "Private Key"
+      pattern: "-----BEGIN RSA PRIVATE KEY-----"
+      redact: true
+    - name: "Private Key (EC)"
+      kind: "Private Key"
+      pattern: "-----BEGIN EC PRIVATE KEY-----"
+      redact: true
+    - name: "AWS Access Key"
+      kind: "AWS Access Key"
+      pattern: "\b(AKI[0-9A-Z]{17})\b"
+      redact: true
+    - name: "Generic API Key"
+      kind: "Generic API Key"
+      pattern: "\b(?i)(api_?key|token|secret)[:=]\s*([A-Za-z0-9_\-]{16,})\b"
+      redact: true
