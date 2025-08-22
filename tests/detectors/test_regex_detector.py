@@ -11,7 +11,7 @@ def test_regex_detector_basic():
         }
     ]
     det = RegexDetector(rules)
-    text = "creds: AKIA1234567890ABCDE other text"
+    text = "creds: AKIA1234567890ABCDE1 other text"
     out = list(det.detect("foo.txt", text))
     assert out, "Expected a match"
     assert out[0].kind == "AWS Access Key"

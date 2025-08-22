@@ -11,7 +11,7 @@ regex_detector:
       redact: true
     - name: "AWS Access Key"
       kind: "AWS Access Key"
-      pattern: "\b(AKI[0-9A-Z]{17})\b"
+      pattern: "\b(AKIA[0-9A-Z]{16})\b"
       redact: true
     - name: "Generic API Key"
       kind: "Generic API Key"
