@@ -1,0 +1,16 @@
+
+crew:
+  name: "SS360 Developer Crew"
+  agents:
+    - id: dev
+      role: "Senior Python/FastAPI Engineer"
+      goal: "Implement detector plugins and API filters with tests."
+      backstory: "Expert in static analysis, regex, and secure coding."
+      tools: []
+  tasks:
+    - id: add_filters
+      description: "Add limit/offset/repo/since filters to /scans/latest and write unit tests."
+      agent: dev
+    - id: add_detectors
+      description: "Add detectors for Stripe, Slack, and Google API keys with tests."
+      agent: dev
