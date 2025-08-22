@@ -1,6 +1,6 @@
-
 import pkgutil, importlib, pathlib
 from .base import Detector
+
 
 def load_detectors():
     detectors = []

@@ -1,8 +1,9 @@
-
 import os
+
 
 def can_use_llm() -> bool:
     return bool(os.getenv("OPENAI_API_KEY"))
+
 
 def verify_with_llm_snippet(kind: str, snippet: str):
     """Placeholder: returns heuristic without calling external API.

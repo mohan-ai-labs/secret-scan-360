@@ -1,8 +1,45 @@
-
 import os
 
-IGNORE_DIRS = {"node_modules","vendor","dist","build",".git",".hg",".svn","__pycache__","target",".next",".vercel","coverage"}
-IGNORE_FILE_EXT = {".png",".jpg",".jpeg",".gif",".webp",".ico",".pdf",".zip",".gz",".tgz",".bz2",".xz",".7z",".mp3",".mp4",".mov",".webm",".woff",".woff2",".ttf",".eot",".dll",".so"}
+IGNORE_DIRS = {
+    "node_modules",
+    "vendor",
+    "dist",
+    "build",
+    ".git",
+    ".hg",
+    ".svn",
+    "__pycache__",
+    "target",
+    ".next",
+    ".vercel",
+    "coverage",
+}
+IGNORE_FILE_EXT = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".ico",
+    ".pdf",
+    ".zip",
+    ".gz",
+    ".tgz",
+    ".bz2",
+    ".xz",
+    ".7z",
+    ".mp3",
+    ".mp4",
+    ".mov",
+    ".webm",
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".eot",
+    ".dll",
+    ".so",
+}
+
 
 def should_skip(path: str) -> bool:
     parts = path.split(os.sep)

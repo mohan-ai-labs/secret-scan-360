@@ -1,4 +1,3 @@
-
 import uvicorn, os, json
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -7,8 +6,10 @@ from .core.scanner import scan_tree
 
 app = FastAPI(title="ss360-agents")
 
+
 class RunInput(BaseModel):
     repo_url: str
+
 
 @app.post("/run")
 def run_scan(inp: RunInput):
@@ -27,9 +28,11 @@ def run_scan(inp: RunInput):
         if workdir:
             cleanup(workdir)
 
+
 @app.get("/health")
 def health():
     return {"ok": True, "service": "ss360-agents"}
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "8080")))

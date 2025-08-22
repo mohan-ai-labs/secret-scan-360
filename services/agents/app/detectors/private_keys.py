@@ -1,13 +1,16 @@
-
 import re
 from .base import Detector, Finding
+
 PEM_PATTERNS = [
     (r"-----BEGIN RSA PRIVATE KEY-----", "Private Key"),
     (r"-----BEGIN EC PRIVATE KEY-----", "Private Key"),
     (r"-----BEGIN OPENSSH PRIVATE KEY-----", "Private Key"),
 ]
+
+
 class DetectorImpl(Detector):
     name = "private_keys"
+
     def scan_file(self, path: str, text: str):
         findings = []
         for pat, kind in PEM_PATTERNS:

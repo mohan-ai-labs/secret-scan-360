@@ -1,4 +1,3 @@
-
 import os
 from typing import List, Dict, Any
 from .utils import should_skip
@@ -6,12 +5,13 @@ from ..detectors.registry import load_detectors
 from ..detectors.base import Finding
 from .llm import can_use_llm, verify_with_llm_snippet
 
+
 def scan_tree(root_dir: str) -> Dict[str, Any]:
     detectors = load_detectors()
     findings: List[Finding] = []
     for base, dirs, files in os.walk(root_dir):
         # prune ignored dirs
-        dirs[:] = [d for d in dirs if not should_skip(os.path.join(base,d))]
+        dirs[:] = [d for d in dirs if not should_skip(os.path.join(base, d))]
         for fn in files:
             path = os.path.join(base, fn)
             rel = os.path.relpath(path, root_dir)
@@ -48,12 +48,27 @@ def scan_tree(root_dir: str) -> Dict[str, Any]:
     else:
         # fallback: mark known strong patterns true
         for f in findings:
-            if f.kind in {"Private Key","AWS Access Key","AWS Secret Key","GitHub Token"}:
+            if f.kind in {
+                "Private Key",
+                "AWS Access Key",
+                "AWS Secret Key",
+                "GitHub Token",
+            }:
                 f.is_secret = True
                 f.reason = "Pattern-based verification (no LLM)"
     true_hits = sum(1 for f in findings if f.is_secret)
     # serialize
     return {
-        "findings": [dict(path=f.path, kind=f.kind, match=f.match, line=f.line, is_secret=f.is_secret, reason=f.reason) for f in findings],
+        "findings": [
+            dict(
+                path=f.path,
+                kind=f.kind,
+                match=f.match,
+                line=f.line,
+                is_secret=f.is_secret,
+                reason=f.reason,
+            )
+            for f in findings
+        ],
         "true_hits": true_hits,
     }

@@ -1,0 +1,14 @@
+[flake8]
+max-line-length = 120
+extend-ignore = E203  
+per-file-ignores =
+    agents/crew/run.py: E401
+    agents/crew/tools.py: E401,F541,E231
+    agents/dev/run_agent.py: E401
+    agents/dev/run_local.py: F401,E401
+    services/agents/app/core/git_ops.py: F401,E401
+    services/agents/app/detectors/registry.py: E401
+    services/agents/app/server.py: F401,E401
+    services/api/app/main.py: E401,F401,E501
+
+    agents/dev/run_agent_impl.py: E501
