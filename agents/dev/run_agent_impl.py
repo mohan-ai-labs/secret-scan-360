@@ -1,117 +1,146 @@
-#!/usr/bin/env python3
-"""
-Agent Runner Implementation for SecretScan360
-This script wires CrewAI agent(s) to implement and commit specific features
-into a feature branch for development.
-"""
+# agents/dev/run_agent_impl.py
+from __future__ import annotations
 
-
+import os
 import subprocess
-from crewai import Agent, Task, Crew
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# ---------------------------------------------------------------------------
-# Git Helpers
-# ---------------------------------------------------------------------------
+import sys
+from pathlib import Path
+from textwrap import dedent
 
 
-def run(cmd):
-    print(f"$ {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+# Optional: update this text dynamically in other steps.
+# Keep it short here to avoid flake8 E501. Your task spec can be injected by the
+# earlier "patch" step that overwrites the block between the BEGIN/END markers.
+# === TASK_TEXT:BEGIN ===
+TASK_TEXT = dedent(
+    """
+    Implement the next feature as described in docs/specs/*.md and commit to the feature branch.
+    """
+).strip()
+# === TASK_TEXT:END ===
 
 
-def ensure_branch(branch: str):
-    run(["git", "fetch", "--all", "--prune"])
+def run(cmd: list[str], cwd: Path | None = None) -> None:
+    """Run a shell command and stream output; fail fast on non-zero exit."""
+    print("$", " ".join(cmd))
+    subprocess.run(cmd, check=True, cwd=str(cwd) if cwd else None)
+
+
+def ensure_repo_root() -> None:
+    """Exit if script is not executed from inside the repo."""
     try:
-        run(["git", "checkout", branch])
+        run(["git", "rev-parse", "--is-inside-work-tree"])
     except subprocess.CalledProcessError:
-        run(["git", "checkout", "-B", branch])
-    run(["git", "pull", "--ff-only", "origin", branch])
+        print("Error: not inside a git repository.", file=sys.stderr)
+        sys.exit(1)
 
 
-# ---------------------------------------------------------------------------
-# Agent & Task Setup
-# ---------------------------------------------------------------------------
-
-dev = Agent(
-    role="Senior Python/FastAPI Engineer",
-    goal="Implement API filters for /scans/latest endpoint with pagination and filtering",
-    backstory=(
-        "You are a backend engineer contributing to SecretScan360. "
-        "You write secure, well-tested, PEP8-compliant code with FastAPI, SQL, and psycopg. "
-        "You always use query placeholders for SQL (no string formatting). "
-    ),
-    verbose=True,
-)
-
-filters_spec = (
-    "Add query params to GET /scans/latest:\n"
-    "- limit (default 50, max 200), offset (default 0)\n"
-    "- repo (substring filter on repo_url)\n"
-    "- since (RFC3339 timestamp on started_at, inclusive)\n"
-    "Update README with curl examples. Add minimal smoke test."
-)
-
-filters_task = Task(
-    description=filters_spec,
-    expected_output="Updated FastAPI route with filters, doc, and test committed to branch.",
-    agent=dev,
-)
-
-crew = Crew(agents=[dev], tasks=[filters_task])
-
-# ---------------------------------------------------------------------------
-# Main Entrypoint
-# ---------------------------------------------------------------------------
-
-
-def main():
-    branch = "agent/feat-api-filters"
-    ensure_branch("main")
-    run(["git", "checkout", "-B", branch])
-
-    result = crew.kickoff()
-    print("==== Agent run complete ====")
-    print(result)
-
-    run(["git", "add", "-A"])
-    run(
-        [
-            "git",
-            "commit",
-            "--allow-empty",
-            "-m",
-            "feat(api): add filters for /scans/latest (agent)",
-        ]
+def ensure_git_identity() -> None:
+    """Make sure git user is configured, default to Mohan's noreply if missing."""
+    name = os.environ.get("GIT_USER_NAME", "Mohan Krishna Alavala")
+    email = os.environ.get(
+        "GIT_USER_EMAIL",
+        "mohankrishnaalavala@users.noreply.github.com",
     )
-    run(["git", "push", "origin", branch])
+    run(["git", "config", "user.name", name])
+    run(["git", "config", "user.email", email])
+
+
+def sync_main_branch() -> None:
+    """
+    Ensure main is up to date:
+    - fetch
+    - checkout main
+    - try fast-forward; if diverged, do a no-ff merge of origin/main
+    """
+    run(["git", "fetch", "--all", "--prune"])
+    run(["git", "checkout", "main"])
+    try:
+        run(["git", "pull", "--ff-only", "origin", "main"])
+    except subprocess.CalledProcessError:
+        # Diverged: fall back to merge to avoid interactive rebase
+        print("Fast-forward failed; attempting non-ff merge with origin/main")
+        run(
+            [
+                "git",
+                "merge",
+                "--no-ff",
+                "origin/main",
+                "-m",
+                "chore: sync with origin/main",
+            ]
+        )
+
+
+def checkout_feature_branch() -> str:
+    """
+    Create/switch to the feature branch specified by AGENT_BRANCH,
+    defaulting to 'agent/feat-work-item'.
+    """
+    branch = os.environ.get("AGENT_BRANCH", "agent/feat-work-item")
+    # Use -B to create or reset to current HEAD safely
+    run(["git", "checkout", "-B", branch])
+    return branch
+
+
+def write_status_note(branch: str) -> None:
+    """
+    Optionally drop a lightweight agent status note. This is safe to commit
+    and helps us confirm end-to-end commit flow.
+    """
+    note = REPO_ROOT / "agents" / "dev" / ".agent_status.txt"
+    note.parent.mkdir(parents=True, exist_ok=True)
+    content = (
+        dedent(
+            f"""
+        Branch: {branch}
+        Task (summary):
+        {TASK_TEXT}
+        """
+        ).strip()
+        + "\n"
+    )
+    note.write_text(content, encoding="utf-8")
+    print(f"Wrote agent status note -> {note}")
+
+
+def stage_commit_push(branch: str, message: str) -> None:
+    """Stage all, commit (allow empty), and push branch upstream."""
+    run(["git", "add", "-A"])
+    try:
+        run(["git", "commit", "--allow-empty", "-m", message])
+    except subprocess.CalledProcessError:
+        # If hooks fail, surface message and abort so caller can fix.
+        print(
+            "Commit failed (likely a pre-commit hook). Fix issues and re-run.",
+            file=sys.stderr,
+        )
+        raise
+    run(["git", "push", "-u", "origin", branch])
+
+
+def main() -> None:
+    ensure_repo_root()
+    ensure_git_identity()
+    sync_main_branch()
+    branch = checkout_feature_branch()
+
+    # Minimal no-op "touch" to ensure we always have at least one file updated
+    write_status_note(branch)
+
+    # Commit & push (hooks will run here)
+    default_msg = os.environ.get(
+        "AGENT_COMMIT_MSG",
+        "chore(agent): checkpoint for current task",
+    )
+    stage_commit_push(branch, default_msg)
+
+    print("\n✅ Agent runner completed successfully.")
+    print(f"   Branch: {branch}")
+    print("   You can now open a PR from this branch to main.")
 
 
 if __name__ == "__main__":
     main()
-
-
-# Auto-injected task text for current feature
-TASK_TEXT = """\
-# === TASK_TEXT:BEGIN ===
-Wire plugin registry into the scanning pipeline.
-
-Goals:
-1) Construct DetectorRegistry at agents service startup:
-   - Load rules from services/agents/app/config/detectors.yaml if present,
-     else use defaults from detectors.registry.DEFAULT_REGEX_RULES.
-2) Update core scanner to iterate over registered detectors and merge findings.
-3) Update POST /run (agents service) to accept repo_url and return findings produced by detectors.
-4) Keep API response format identical to current /scan expectations (path, kind, match, line, is_secret, reason).
-5) Add a unit test for registry wiring (at least one positive hit from RegexDetector).
-6) Update README with a short 'Detector plugins' section and YAML override example.
-
-Success checks:
-- 'docker compose up -d' stays healthy.
-- 'curl -s -X POST http://localhost:8000/scan -H content-type:application/json -d '{" + '"repo_url":"https://github.com/hashicorp/vault"' + "}' returns findings with kinds from RegexDetector (e.g., 'Private Key').
-# === TASK_TEXT:END ===
-
-
-"""

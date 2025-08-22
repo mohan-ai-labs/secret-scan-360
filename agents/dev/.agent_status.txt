@@ -1,0 +1,3 @@
+Branch: agent/feat-scanner-registry
+Task (summary):
+Implement the next feature as described in docs/specs/*.md and commit to the feature branch.
