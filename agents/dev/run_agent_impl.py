@@ -169,11 +169,6 @@ curl -s -X POST http://localhost:8000/scan -H 'content-type: application/json' -
 Unit tests pass locally and in CI.
 
 --- SPEC END ---
-
-# Acceptance:
-# - Code compiles, docker compose up -d works.
-# - /scan returns findings with "detector":"regex".
-# - Add unit tests in services/api/app/tests/test_detectors.py; ensure pytest passes.
-# - Commit to branch: agent/feat-plugin-interface
 # === TASK_TEXT:END ===
+
 """
