@@ -16,7 +16,7 @@ regex_detector:
     # AWS access key (classic AKIA*)
     - name: "AWS Access Key"
       kind: "AWS Access Key"
-      pattern: '\b(AKIA[0-9A-Z]{16})\b'
+      pattern: "\\b(AKIA[0-9A-Z]{16})\\b"
       redact: true
 
     # GitHub Personal Access Token (classic)
@@ -52,6 +52,6 @@ regex_detector:
     # Generic API-ish key/token
     - name: "Generic API Key"
       kind: "Generic API Key"
-      pattern: '\b(?i)(api_?key|token|secret)[:=]\s*([A-Za-z0-9_\-]{16,})\b'
+      pattern: "\\b(?i)(api_?key|token|secret)[:=]\\s*([A-Za-z0-9_\\-]{16,})\\b"
       redact: true
 
