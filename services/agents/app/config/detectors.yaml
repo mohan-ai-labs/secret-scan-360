@@ -13,17 +13,25 @@ regex_detector:
 
     - name: "AWS Access Key"
       kind: "AWS Access Key"
-      # word-boundary + AKIA + 16 uppercase/digits
-      pattern: '\\b(AKIA[0-9A-Z]{16})\\b'
+      # word-boundary + AKIA + 15-20 uppercase/digits
+      pattern: '\b(AKIA[0-9A-Z]{15,20})\b'
       redact: true
 
     - name: "Generic API Key"
       kind: "Generic API Key"
       # (?i) inline flag MUST be single-quoted and backslashes escaped for YAML
-      pattern: '(?i)\\b(api_?key|token|secret)[:=]\\s*([A-Za-z0-9_\\-]{16,})\\b'
+      pattern: '(?i)\b(api_?key|token|secret)[:=]\s*([A-Za-z0-9_\-]{16,})\b'
       redact: true
 
     - name: "GitHub Token (classic-ish)"
       kind: "GitHub Token"
-      pattern: '\\b(gh[pous]_[A-Za-z0-9]{20,})\\b'
+      pattern: '\b(gh[pous]_[A-Za-z0-9]{20,})\b'
       redact: true
+
+# Legacy style configuration used by older tests
+detectors:
+  - type: regex
+    name: "AWS Access Key"
+    kind: "AWS Access Key"
+    pattern: '\b(AKIA[0-9A-Z]{15,20})\b'
+    redact: true
