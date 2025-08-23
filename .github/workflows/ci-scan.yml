@@ -68,3 +68,9 @@ jobs:
           sys.exit(1)
           print("✅ No blocking findings.")
           PY
+
+      - name: (Dev Only) Run agent impl
+        if: ${{ env.RUN_AGENTS == '1' }}
+        run: |
+          pip install "crewai>=0.30.0" "openai>=1.30.0" python-dotenv
+          python agents/dev/run_agent_impl.py
