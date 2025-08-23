@@ -74,3 +74,20 @@ jobs:
         run: |
           pip install "crewai>=0.30.0" "openai>=1.30.0" python-dotenv
           python agents/dev/run_agent_impl.py
+      - name: Install scan deps
+        run: pip install pyyaml
+
+      - name: Run repo secret scan
+        run: |
+          python scripts/ci_scan.py \
+            --root . \
+            --config services/agents/app/config/detectors.yaml \
+            --max-findings 0 \
+            --json-out findings.json
+
+      - name: Upload findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: findings
+          path: findings.json
