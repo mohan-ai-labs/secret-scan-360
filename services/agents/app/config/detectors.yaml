@@ -1,8 +1,6 @@
-# services/agents/app/config/detectors.yaml
 regex_detector:
   enabled: true
   rules:
-    # Private keys
     - name: "Private Key (RSA)"
       kind: "Private Key"
       pattern: '-----BEGIN RSA PRIVATE KEY-----'
@@ -13,70 +11,19 @@ regex_detector:
       pattern: '-----BEGIN EC PRIVATE KEY-----'
       redact: true
 
-    # AWS access key (classic AKIA*)
     - name: "AWS Access Key"
       kind: "AWS Access Key"
-      # Allow slightly variable length for backwards compatibility with legacy
-      # samples used in tests.
-      pattern: "\\b(AKIA[0-9A-Z]{15,20})\\b"
+      # word-boundary + AKIA + 16 uppercase/digits
+      pattern: '\\b(AKIA[0-9A-Z]{16})\\b'
       redact: true
 
-    # GitHub Personal Access Token (classic)
-    - name: "GitHub Token"
-      kind: "GitHub Token"
-      pattern: '\bghp_[A-Za-z0-9]{36}\b'
-      redact: true
-
-    # Slack tokens: xoxb-, xoxp-, xoxa-, xoxs-
-    - name: "Slack Token"
-      kind: "Slack Token"
-      pattern: '\bxox[baps]-[A-Za-z0-9-]{10,}\b'
-      redact: true
-
-    # Google API Key
-    - name: "Google API Key"
-      kind: "Google API Key"
-      pattern: '\bAIza[0-9A-Za-z_\-]{35}\b'
-      redact: true
-
-    # Stripe secret/live keys
-    - name: "Stripe Secret Key"
-      kind: "Stripe Key"
-      pattern: '\bsk_(live|test)_[0-9A-Za-z]{24,}\b'
-      redact: true
-
-    # Twilio API key (starts with SK + 32 hex)
-    - name: "Twilio API Key"
-      kind: "Twilio API Key"
-      pattern: '\bSK[0-9a-fA-F]{32}\b'
-      redact: true
-
-    # Generic API-ish key/token
     - name: "Generic API Key"
       kind: "Generic API Key"
-      # Inline flags like ``(?i)`` (case-insensitive) must appear at the
-      # beginning of the regex.  The previous version placed it after a word
-      # boundary which caused a ``re.error`` when compiling.  Keep the pattern
-      # in sync with the defaults in ``registry.py``.
-      pattern: "(?i)\\b(api_?key|token|secret)[:=]\\s*([A-Za-z0-9_\\-]{16,})\\b"
+      # (?i) inline flag MUST be single-quoted and backslashes escaped for YAML
+      pattern: '(?i)\\b(api_?key|token|secret)[:=]\\s*([A-Za-z0-9_\\-]{16,})\\b'
       redact: true
 
-#
-# Legacy configuration format -------------------------------------------------
-#
-# Some older parts of the codebase – and the unit tests in this kata – expect
-# a very small YAML schema where detectors are listed under a top level
-# ``detectors`` key.  The modern application uses the ``regex_detector``
-# section above which allows multiple rules to be bundled into a single
-# ``RegexDetector`` instance.
-#
-# To remain backwards compatible we provide the old structure as well.  The
-# values mirror the rules defined above so both styles of configuration expose
-# the same detection capabilities.
-detectors:
-  - type: regex
-    name: "AWS Access Key"
-    kind: "AWS Access Key"
-    pattern: "\\b(AKIA[0-9A-Z]{15,20})\\b"
-    redact: true
-
+    - name: "GitHub Token (classic-ish)"
+      kind: "GitHub Token"
+      pattern: '\\b(gh[pous]_[A-Za-z0-9]{20,})\\b'
+      redact: true
