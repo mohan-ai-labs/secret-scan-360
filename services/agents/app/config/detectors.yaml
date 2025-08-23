@@ -1,19 +1,57 @@
+# services/agents/app/config/detectors.yaml
 regex_detector:
   enabled: true
   rules:
+    # Private keys
     - name: "Private Key (RSA)"
       kind: "Private Key"
-      pattern: "-----BEGIN RSA PRIVATE KEY-----"
+      pattern: '-----BEGIN RSA PRIVATE KEY-----'
       redact: true
+
     - name: "Private Key (EC)"
       kind: "Private Key"
-      pattern: "-----BEGIN EC PRIVATE KEY-----"
+      pattern: '-----BEGIN EC PRIVATE KEY-----'
       redact: true
+
+    # AWS access key (classic AKIA*)
     - name: "AWS Access Key"
       kind: "AWS Access Key"
-      pattern: "\b(AKIA[0-9A-Z]{16})\b"
+      pattern: '\b(AKIA[0-9A-Z]{16})\b'
       redact: true
+
+    # GitHub Personal Access Token (classic)
+    - name: "GitHub Token"
+      kind: "GitHub Token"
+      pattern: '\bghp_[A-Za-z0-9]{36}\b'
+      redact: true
+
+    # Slack tokens: xoxb-, xoxp-, xoxa-, xoxs-
+    - name: "Slack Token"
+      kind: "Slack Token"
+      pattern: '\bxox[baps]-[A-Za-z0-9-]{10,}\b'
+      redact: true
+
+    # Google API Key
+    - name: "Google API Key"
+      kind: "Google API Key"
+      pattern: '\bAIza[0-9A-Za-z_\-]{35}\b'
+      redact: true
+
+    # Stripe secret/live keys
+    - name: "Stripe Secret Key"
+      kind: "Stripe Key"
+      pattern: '\bsk_(live|test)_[0-9A-Za-z]{24,}\b'
+      redact: true
+
+    # Twilio API key (starts with SK + 32 hex)
+    - name: "Twilio API Key"
+      kind: "Twilio API Key"
+      pattern: '\bSK[0-9a-fA-F]{32}\b'
+      redact: true
+
+    # Generic API-ish key/token
     - name: "Generic API Key"
       kind: "Generic API Key"
-      pattern: "\b(?i)(api_?key|token|secret)[:=]\s*([A-Za-z0-9_\-]{16,})\b"
+      pattern: '\b(?i)(api_?key|token|secret)[:=]\s*([A-Za-z0-9_\-]{16,})\b'
       redact: true
+
