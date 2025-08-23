@@ -164,14 +164,22 @@ class Scanner:
             if text is None:
                 continue
             for f in self.registry.detect(str(p), text):
-                # Normalize minimal shape
+                # Normalize minimal shape.  Detectors in this kata return
+                # ``Finding`` dataclasses, but some tests build dictionaries
+                # directly.  Support both by using ``getattr`` as a fallback
+                # when ``dict.get`` is not available.
+                if isinstance(f, dict):
+                    getter = f.get
+                else:
+                    getter = lambda k, default=None: getattr(f, k, default)
+
                 fnorm = {
-                    "path": f.get("path") or str(p),
-                    "kind": f.get("kind") or "Unknown",
-                    "match": f.get("match") or "",
-                    "line": f.get("line", None),
-                    "is_secret": bool(f.get("is_secret", False)),
-                    "reason": f.get("reason", ""),
+                    "path": getter("path") or str(p),
+                    "kind": getter("kind") or "Unknown",
+                    "match": getter("match") or "",
+                    "line": getter("line"),
+                    "is_secret": bool(getter("is_secret", False)),
+                    "reason": getter("reason", ""),
                 }
                 findings.append(fnorm)
         return findings
