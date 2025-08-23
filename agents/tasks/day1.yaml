@@ -1,0 +1,10 @@
+
+tasks:
+  - id: plugin-interface
+    title: "Implement Detector base + RegexDetector"
+    spec: |
+      Implement a detector plugin system with YAML rules and tests.
+  - id: scanner-integration
+    title: "Integrate scanner with registry"
+    spec: |
+      Wire registry + scanner, return findings, add unit tests.
