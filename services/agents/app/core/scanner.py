@@ -7,7 +7,6 @@ from typing import Iterable, List, Dict, Optional
 # Registry lives here
 from services.agents.app.detectors.registry import DetectorRegistry
 
-
 # Basic file helpers
 TEXT_EXTS = {
     ".txt",
@@ -129,12 +128,6 @@ class Scanner:
             "**/__pycache__/**",
         ]
 
-        def matches_any(p: Path, patterns: List[str]) -> bool:
-            str(p)
-            return any(
-                Path().glob(pattern) and p.match(pattern) for pattern in patterns
-            )  # fallback glob+match
-
         for root in roots:
             root_path = Path(root).resolve()
             if root_path.is_file():
@@ -159,20 +152,25 @@ class Scanner:
         max_bytes: int = 1_000_000,
     ) -> List[Dict]:
         findings: List[Dict] = []
+
+        def _make_getter(obj):
+            """
+            Return a getter function that works for both dicts and objects.
+            """
+            if isinstance(obj, dict):
+                return obj.get
+
+            def _g(key, default=None):
+                return getattr(obj, key, default)
+
+            return _g
+
         for p in self.iter_files(paths):
             text = _read_text_safely(p, max_bytes=max_bytes)
             if text is None:
                 continue
             for f in self.registry.detect(str(p), text):
-                # Normalize minimal shape.  Detectors in this kata return
-                # ``Finding`` dataclasses, but some tests build dictionaries
-                # directly.  Support both by using ``getattr`` as a fallback
-                # when ``dict.get`` is not available.
-                if isinstance(f, dict):
-                    getter = f.get
-                else:
-                    getter = lambda k, default=None: getattr(f, k, default)
-
+                getter = _make_getter(f)
                 fnorm = {
                     "path": getter("path") or str(p),
                     "kind": getter("kind") or "Unknown",
