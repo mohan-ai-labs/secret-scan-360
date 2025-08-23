@@ -58,13 +58,13 @@ DEFAULT_REGEX_RULES = [
     {
         "name": "AWS Access Key",
         "kind": "AWS Access Key",
-        "pattern": r"\b(AKI[0-9A-Z]{17})\b",
+        "pattern": r"\b(AKIA[0-9A-Z]{16})\b",
         "redact": True,
     },
     {
         "name": "Generic API Key",
         "kind": "Generic API Key",
-        "pattern": r"(?i)\b(api_?key|token|secret)[:=]\s*([A-Za-z0-9_\-]{16,})\b",
+        "pattern": r"\b(?i)(api_?key|token|secret)[:=]\s*([A-Za-z0-9_\-]{16,})\b",
         "redact": True,
     },
 ]
