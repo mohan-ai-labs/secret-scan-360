@@ -1,0 +1,13 @@
+
+name: Agent Exec
+on:
+  push:
+    branches:
+      - 'agent/**'
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run agent
+        run: python agents/dev/run_agent_impl.py
