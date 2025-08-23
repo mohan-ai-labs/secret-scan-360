@@ -1,32 +1,15 @@
-import uvicorn, os, json
-from fastapi import FastAPI, HTTPException
+# services/agents/app/server.py
+from fastapi import FastAPI
 from pydantic import BaseModel
-from .core.git_ops import shallow_clone, cleanup
-from .core.scanner import scan_tree
 
-app = FastAPI(title="ss360-agents")
+from services.agents.app.core.scanner import Scanner
 
-
-class RunInput(BaseModel):
-    repo_url: str
+app = FastAPI()
 
 
-@app.post("/run")
-def run_scan(inp: RunInput):
-    repo = inp.repo_url.strip()
-    if not repo:
-        raise HTTPException(status_code=400, detail="repo_url required")
-    workdir = None
-    try:
-        workdir = shallow_clone(repo)
-        result = scan_tree(workdir)
-        result["repo"] = repo
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        if workdir:
-            cleanup(workdir)
+class RunRequest(BaseModel):
+    repo_path: str | None = None
+    paths: list[str] | None = None  # alternatively allow direct paths
 
 
 @app.get("/health")
@@ -34,5 +17,15 @@ def health():
     return {"ok": True, "service": "ss360-agents"}
 
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "8080")))
+@app.post("/run")
+def run(req: RunRequest):
+    # You probably have logic elsewhere to clone repo_url -> workspace path.
+    roots = []
+    if req.repo_path:
+        roots.append(req.repo_path)
+    if req.paths:
+        roots.extend(req.paths)
+
+    scanner = Scanner.from_config("services/agents/app/config/detectors.yaml")
+    findings = scanner.scan_paths(roots or ["."])
+    return {"ok": True, "findings": findings}

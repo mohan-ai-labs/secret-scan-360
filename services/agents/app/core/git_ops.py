@@ -1,4 +1,7 @@
-import os, shutil, subprocess, tempfile, uuid
+import os
+import shutil
+import subprocess
+import uuid
 
 
 def shallow_clone(repo_url: str) -> str:
