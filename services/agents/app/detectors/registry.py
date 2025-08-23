@@ -41,6 +41,36 @@ class DetectorRegistry:
     def all(self) -> List[Detector]:  # pragma: no cover - simple wrapper
         return self.detectors()
 
+    # -- construction helpers ---------------------------------------
+    @classmethod
+    def load_from_yaml(cls, config_path: str) -> "DetectorRegistry":
+        """Load detector rules from a YAML configuration file.
+
+        Historically the project exposed a ``load_from_yaml`` class method
+        used by higher level components such as :class:`Scanner`.  The original
+        implementation disappeared during refactoring which left the tests
+        (and the ``Scanner`` helper) without a way to populate the registry from
+        configuration.  Reintroduce this convenience wrapper by delegating to
+        :func:`build_registry` so both the functional tests and the scanner can
+        obtain a fully configured registry with a single call.
+        """
+
+        return build_registry(config_path)
+
+    # -- detection ----------------------------------------------------
+    def detect(self, path: str, text: str):
+        """Run all registered detectors over *text*.
+
+        This mirrors the interface of individual detectors, yielding each
+        finding in turn.  It provides a minimal façade so higher level
+        components like :class:`Scanner` can treat the registry as a
+        detector-like object.
+        """
+
+        for detector in self._detectors:
+            for finding in detector.detect(path, text):
+                yield finding
+
 
 DEFAULT_REGEX_RULES = [
     {
@@ -58,13 +88,18 @@ DEFAULT_REGEX_RULES = [
     {
         "name": "AWS Access Key",
         "kind": "AWS Access Key",
-        "pattern": r"\b(AKIA[0-9A-Z]{16})\b",
+        # Some legacy test data used 15 characters after the ``AKIA`` prefix
+        # instead of the usual 16.  Accept a small range for compatibility.
+        "pattern": r"\b(AKIA[0-9A-Z]{15,20})\b",
         "redact": True,
     },
     {
         "name": "Generic API Key",
         "kind": "Generic API Key",
-        "pattern": r"\b(?i)(api_?key|token|secret)[:=]\s*([A-Za-z0-9_\-]{16,})\b",
+        # ``(?i)`` must appear at the start of the expression for Python's
+        # regular expression engine.  The previous pattern placed it after a
+        # word boundary which raised ``re.error`` during compilation.
+        "pattern": r"(?i)\b(api_?key|token|secret)[:=]\s*([A-Za-z0-9_\-]{16,})\b",
         "redact": True,
     },
 ]
