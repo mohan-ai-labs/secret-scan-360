@@ -21,7 +21,27 @@ import sys
 from pathlib import Path
 from typing import List, Dict, Any
 
-from services.agents.app.core.scanner import Scanner
+# Ensure repository root is on the Python path when executed as a script
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from services.agents.app.core.scanner import Scanner  # noqa: E402
+
+
+DEFAULT_EXCLUDES = [
+    "**/.git/**",
+    "**/.venv/**",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.pytest_cache/**",
+    "**/__pycache__/**",
+    "*/docs/**/*",
+    "*/tests/**/*",
+    "*/services/agents/app/config/detectors.yaml",
+    "*/detectors/*",
+]
 
 
 def parse_args() -> argparse.Namespace:
@@ -49,16 +69,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--exclude",
         nargs="*",
-        default=[
-            "**/.git/**",
-            "**/.venv/**",
-            "**/node_modules/**",
-            "**/dist/**",
-            "**/build/**",
-            "**/.pytest_cache/**",
-            "**/__pycache__/**",
-        ],
-        help="Glob(s) to exclude (space-separated)",
+        default=[],
+        help="Glob(s) to exclude in addition to defaults (space-separated)",
     )
     p.add_argument(
         "--min-match-len",
@@ -119,14 +131,14 @@ def main() -> int:
         return 2
 
     scanner = Scanner.from_config(config_path)
+    exclude_globs = DEFAULT_EXCLUDES + (args.exclude or [])
     findings = scanner.scan_paths(
         [root],
+        include_globs=args.include,
+        exclude_globs=exclude_globs,
         max_bytes=1_000_000,
     )
-    findings = filter_findings(
-        findings,
-        args["min_match_len"] if isinstance(args, dict) else args.min_match_len,
-    )
+    findings = filter_findings(findings, args.min_match_len)
 
     report = {
         "root": str(root),

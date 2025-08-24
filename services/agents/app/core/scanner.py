@@ -149,6 +149,9 @@ class Scanner:
     def scan_paths(
         self,
         paths: Iterable[Path | str],
+        *,
+        include_globs: Optional[List[str]] = None,
+        exclude_globs: Optional[List[str]] = None,
         max_bytes: int = 1_000_000,
     ) -> List[Dict]:
         findings: List[Dict] = []
@@ -165,7 +168,9 @@ class Scanner:
 
             return _g
 
-        for p in self.iter_files(paths):
+        for p in self.iter_files(
+            paths, include_globs=include_globs, exclude_globs=exclude_globs
+        ):
             text = _read_text_safely(p, max_bytes=max_bytes)
             if text is None:
                 continue
