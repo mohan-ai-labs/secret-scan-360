@@ -168,7 +168,9 @@ class Scanner:
 
             return _g
 
-        for p in self.iter_files(paths, include_globs=include_globs, exclude_globs=exclude_globs):
+        for p in self.iter_files(
+            paths, include_globs=include_globs, exclude_globs=exclude_globs
+        ):
             text = _read_text_safely(p, max_bytes=max_bytes)
             if text is None:
                 continue
