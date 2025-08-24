@@ -21,6 +21,11 @@ import sys
 from pathlib import Path
 from typing import List, Dict, Any
 
+# Ensure repository root is on the Python path when executed as a script
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from services.agents.app.core.scanner import Scanner
 
 
