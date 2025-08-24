@@ -1,0 +1,93 @@
+name: CI (lint + secret scan)
+
+on:
+  pull_request:
+  push:
+    branches: [ main, master, develop, "**/feat-**", "**/feature/**" ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install lint deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pre-commit==4.3.0
+      - name: Run pre-commit
+        run: pre-commit run --all-files
+
+  scan:
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+
+      - name: Install scan deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+
+      - name: Run repo scan
+        run: |
+          python scripts/ci_scan.py \
+            --detectors services/agents/app/config/detectors.yaml \
+            --include "**/*" \
+            --exclude "**/.git/**" "**/.venv/**" "**/node_modules/**" "**/dist/**" "**/build/**" \
+            --min-match-len 8 \
+            --out findings.json
+
+      - name: Upload findings (json)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: findings-json
+          path: findings.json
+
+      - name: Fail on findings
+        run: |
+          python - <<'PY'
+          import json,sys,os
+          p="findings.json"
+          if not os.path.exists(p):
+          print("No findings file produced.")
+            sys.exit(1)
+          data=json.load(open(p))
+          n=len(data.get("findings",[]))
+          print(f"Secret-scan findings: {n}")
+          # soft threshold can be tuned via env; default is >0 fails
+          threshold=int(os.getenv("SS360_FAIL_IF_AT_LEAST", "1"))
+          if n >= threshold:
+          print("❌ Failing CI due to findings.")
+          for f in data["findings"][:50]:
+          print(f"- {f.get('kind','?')} @ {f.get('path','?')} : {f.get('match','')[:80]}")
+          sys.exit(1)
+          print("✅ No blocking findings.")
+          PY
+
+      - name: (Dev Only) Run agent impl
+        if: ${{ env.RUN_AGENTS == '1' }}
+        run: |
+          pip install "crewai>=0.30.0" "openai>=1.30.0" python-dotenv
+          python agents/dev/run_agent_impl.py
+      - name: Install scan deps
+        run: pip install pyyaml
+
+      - name: Run repo secret scan
+        run: |
+          python scripts/ci_scan.py \
+            --root . \
+            --config services/agents/app/config/detectors.yaml \
+            --max-findings 0 \
+            --json-out findings.json
+
+      - name: Upload findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: findings
+          path: findings.json
