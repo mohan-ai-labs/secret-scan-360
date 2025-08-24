@@ -51,21 +51,24 @@ jobs:
       - name: Fail on findings
         run: |
           python - <<'PY'
-          import json,sys,os
-          p="findings.json"
+          import json, sys, os
+
+          p = "findings.json"
           if not os.path.exists(p):
-          print("No findings file produced.")
-            sys.exit(1)
-          data=json.load(open(p))
-          n=len(data.get("findings",[]))
+              print("No findings file produced.")
+              sys.exit(1)
+
+          data = json.load(open(p))
+          n = len(data.get("findings", []))
           print(f"Secret-scan findings: {n}")
+
           # soft threshold can be tuned via env; default is >0 fails
-          threshold=int(os.getenv("SS360_FAIL_IF_AT_LEAST", "1"))
+          threshold = int(os.getenv("SS360_FAIL_IF_AT_LEAST", "1"))
           if n >= threshold:
-          print("❌ Failing CI due to findings.")
-          for f in data["findings"][:50]:
-          print(f"- {f.get('kind','?')} @ {f.get('path','?')} : {f.get('match','')[:80]}")
-          sys.exit(1)
+              print("❌ Failing CI due to findings.")
+              for f in data["findings"][:50]:
+                  print(f"- {f.get('kind','?')} @ {f.get('path','?')} : {f.get('match','')[:80]}")
+              sys.exit(1)
           print("✅ No blocking findings.")
           PY
 
