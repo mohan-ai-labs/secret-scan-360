@@ -4,6 +4,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   scan:
     runs-on: ubuntu-latest
@@ -28,9 +33,10 @@ jobs:
             --json-out findings.json
 
       - name: Comment findings on PR
-        if: always()
+        if: always() && !github.event.pull_request.head.repo.fork
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           recreate: true
           header: findings
           path: findings.json
+
