@@ -1,0 +1,36 @@
+name: PR Scan with Findings
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run scanner
+        run: |
+          python scripts/ci_scan.py \
+            --root . \
+            --config services/agents/app/config/detectors.yaml \
+            --max-findings 50 \
+            --json-out findings.json
+
+      - name: Comment findings on PR
+        if: always()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          header: findings
+          path: findings.json
