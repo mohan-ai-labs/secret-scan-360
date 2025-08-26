@@ -1,4 +1,4 @@
-name: CI (lint)
+name: CI
 on:
   pull_request:
 jobs:
@@ -24,4 +24,4 @@ jobs:
           python-version: "3.11"
       - run: pip install -U pip
       - run: pip install -e .
-      - run: python scripts/ci_scan.py --format json --output findings.json .
+      - run: python scripts/ci_scan.py --root . --json-out findings.json
