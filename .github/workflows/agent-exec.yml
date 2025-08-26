@@ -1,13 +1,8 @@
-
-name: Agent Exec
+name: SS360 → Agents
 on:
-  push:
-    branches:
-      - 'agent/**'
+  workflow_dispatch:
 jobs:
-  run-agent:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Run agent
-        run: python agents/dev/run_agent_impl.py
+      - run: echo "Manual run only to avoid failing without required secrets."
