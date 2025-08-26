@@ -1,0 +1,1 @@
+# make detectors a package
