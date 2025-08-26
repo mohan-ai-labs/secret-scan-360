@@ -2,7 +2,9 @@
 import re
 from typing import Iterable
 
-PATTERN = re.compile(r'https://hooks\.slack\.com/services/[A-Z0-9]{9}/[A-Z0-9]{9}/[A-Za-z0-9]{24}')
+
+PATTERN = re.compile(r"https://hooks\.slack\.com/services/[A-Z0-9]{9}/[A-Z0-9]{9}/[A-Za-z0-9]{24}")
+
 
 def detect(lines: Iterable[str]):
     for i, line in enumerate(lines, start=1):
@@ -12,5 +14,5 @@ def detect(lines: Iterable[str]):
                 "title": "Slack Webhook Detector",
                 "severity": "high",
                 "description": "Slack incoming webhook URL detected",
-                "line": i
+                "line": i,
             }
