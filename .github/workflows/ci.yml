@@ -1,4 +1,4 @@
-name: CI
+name: CI (lint)
 on:
   pull_request:
 jobs:
@@ -11,5 +11,8 @@ jobs:
           python-version: "3.11"
       - run: pip install -U pip
       - run: pip install -e .
-      - run: pip install pre-commit black flake8
-      - run: pre-commit run --all-files --show-diff-on-failure
+      - run: pip install black flake8
+      - name: Black (check)
+        run: black --check .
+      - name: Flake8
+        run: flake8 .
