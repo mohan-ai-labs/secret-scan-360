@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: MIT
-import argparse, sys, subprocess
+import argparse
+import sys
+import subprocess
+
 from . import __version__
+
 
 def main(argv=None):
     argv = argv or sys.argv[1:]
@@ -10,8 +14,12 @@ def main(argv=None):
 
     sp = sub.add_parser("scan", help="scan a repo/workspace")
     sp.add_argument("root", nargs="?", default=".", help="path to scan")
-    sp.add_argument("--json-out", dest="json_out", default="findings.json",
-                    help="where to write JSON results (default: findings.json)")
+    sp.add_argument(
+        "--json-out",
+        dest="json_out",
+        default="findings.json",
+        help="where to write JSON results (default: findings.json)",
+    )
 
     args = p.parse_args(argv)
 
@@ -20,7 +28,6 @@ def main(argv=None):
         return 0
 
     if args.cmd == "scan":
-        # reuse existing script – keeps your services/ imports intact
         cmd = [sys.executable, "scripts/ci_scan.py", "--json-out", args.json_out, args.root]
         return subprocess.call(cmd)
 
