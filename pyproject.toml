@@ -3,6 +3,10 @@ name = "secret-scan-360"
 version = "0.0.0"
 requires-python = ">=3.10"
 description = "Secret Scan 360 (work-in-progress)"
+dependencies = [
+  "PyYAML>=6.0.1",
+  "requests>=2.31.0",
+]
 
 [build-system]
 requires = ["setuptools>=69", "wheel"]
