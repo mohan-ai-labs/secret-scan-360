@@ -15,3 +15,24 @@ jobs:
       - run: pre-commit run --all-files --show-diff-on-failure
       - run: ss360 --version
       - run: ss360 scan --json-out findings.json .
+
+      - name: Notify agents (always)
+        if: always()
+        env:
+          WEBHOOK: ${{ secrets.AGENTS_WEBHOOK_URL }}
+          TOKEN:   ${{ secrets.AGENTS_WEBHOOK_TOKEN }}
+        run: |
+          if [ -n "$WEBHOOK" ]; then
+            curl -sS -X POST "$WEBHOOK" \
+              -H "Content-Type: application/json" \
+              -H "X-Agent-Token: $TOKEN" \
+              -d @- <<JSON
+            {"event":"gha.status",
+             "repo":"${{ github.repository }}",
+             "branch":"${{ github.head_ref || github.ref_name }}",
+             "pr_number":${{ github.event.pull_request.number || 0 }},
+             "status":"${{ job.status }}",
+             "job":"lint_and_scan"}
+            JSON
+          fi
+
