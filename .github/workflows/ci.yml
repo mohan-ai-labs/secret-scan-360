@@ -12,7 +12,6 @@ jobs:
       - run: pip install -U pip
       - run: pip install -e .
       - run: pip install black flake8 pyyaml
-      # format *before* lint so CI is green even if Black reflows code
       - name: Black (format)
         run: black .
       - name: Flake8 (lint)
@@ -29,14 +28,23 @@ jobs:
         run: |
           set -euo pipefail
           if [ -n "${WEBHOOK:-}" ]; then
-            curl -sS -X POST "$WEBHOOK"               -H "Content-Type: application/json"               -H "X-Agent-Token: ${TOKEN:-}"               -d @- <<'JSON'
+            status="${{ job.status }}"
+            sev=$([ "$status" = "success" ] && echo "low" || echo "high")
+            run_id="${{ github.run_id }}"
+            job="lint_and_scan"
+            repo="${{ github.repository }}"
+            branch="${{ github.head_ref || github.ref_name }}"
+            pr="${{ github.event.pull_request.number || 0 }}"
+            curl -sS -X POST "$WEBHOOK"               -H "Content-Type: application/json"               -H "X-Agent-Token: ${TOKEN:-}"               -d @- <<JSON
             {
-              "event": "gha.status",
-              "repo": "${{ github.repository }}",
-              "branch": "${{ github.head_ref || github.ref_name }}",
-              "pr_number": ${{ github.event.pull_request.number || 0 }},
-              "status": "${{ job.status }}",
-              "job": "lint_and_scan"
+              "event": "finding.${sev}",
+              "repo": "${repo}",
+              "job_id": "gha-${run_id}",
+              "finding_id": "gha-${run_id}-${job}",
+              "file_path": ".github/workflows/ci.yml",
+              "detector_id": "gha_status",
+              "severity": "${sev}",
+              "recommendation": "CI job ${job} is ${status} on ${branch} (PR #${pr})"
             }
 JSON
           fi
