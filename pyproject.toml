@@ -5,5 +5,12 @@ requires-python = ">=3.10"
 description = "Secret Scan 360 (work-in-progress)"
 
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+include = ["services*", "detectors*"]
+exclude = ["tests*", "ops*", "agents*"]
