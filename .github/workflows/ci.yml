@@ -45,6 +45,5 @@ jobs:
               "detector_id": "gha_status",
               "severity": "${sev}",
               "recommendation": "CI job ${job} is ${status} on ${branch} (PR #${pr})"
-            }
-JSON
+            }JSON
           fi
