@@ -1,0 +1,9 @@
+[project]
+name = "secret-scan-360"
+version = "0.0.0"
+requires-python = ">=3.10"
+description = "Secret Scan 360 (work-in-progress)"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
