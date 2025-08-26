@@ -1,20 +1,23 @@
-[project]
-name = "secret-scan-360"
-version = "0.0.0"
-requires-python = ">=3.10"
-description = "Secret Scan 360 (work-in-progress)"
-dependencies = [
-  "PyYAML>=6.0.1",
-  "requests>=2.31.0",
-]
-
 [build-system]
-requires = ["setuptools>=69", "wheel"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "secret-scan-360"
+version = "0.0.1"
+description = "Secret Scan 360 (work-in-progress)"
+requires-python = ">=3.10"
+dependencies = [
+  "pyyaml>=6.0",
+  "requests>=2.31",
+]
+
 [tool.setuptools]
-package-dir = {"" = "."}
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-include = ["services*", "detectors*"]
-exclude = ["tests*", "ops*", "agents*"]
+where = ["src"]
+include = ["ss360*"]
+
+[project.scripts]
+ss360 = "ss360.cli:main"
