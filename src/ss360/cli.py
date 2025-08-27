@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
-import argparse, sys, subprocess
+import argparse
+import sys
+import subprocess
 from . import __version__
 
 def main(argv=None):
