@@ -1,13 +1,4 @@
-.env
-pgdata/
-__pycache__/
-*.zip
-.DS_Store
-.env
-pgdata/
-__pycache__/
-.venv/
-venv/
-.pytest_cache
-*.zip
-.DS_Store
+
+# Added by SS360
+tests/*.tmp
+examples/
