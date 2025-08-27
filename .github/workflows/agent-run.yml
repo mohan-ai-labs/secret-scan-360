@@ -1,8 +1,0 @@
-name: SS360 → Agents
-on:
-  workflow_dispatch:
-jobs:
-  noop:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Manual run only to avoid failing without required secrets."
