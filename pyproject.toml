@@ -1,18 +1,23 @@
-[project]
-name = "ss360"
-version = "0.0.1"
-requires-python = ">=3.10"
-description = "Secret Scan 360 (work-in-progress)"
-
-[project.scripts]
-ss360 = "ss360.cli:main"
-
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "secret-scan-360"
+version = "0.0.1"
+description = "Secret Scan 360"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "SS360 Agents" }]
+dependencies = ["pyyaml"]
+
+[project.scripts]
+ss360 = "ss360.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["ss360*"]

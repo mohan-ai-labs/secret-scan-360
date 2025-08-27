@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from services.agents.app.core.scanner import Scanner  # noqa: E402
+from ss360.scanner import Scanner  # noqa: E402
 
 
 DEFAULT_EXCLUDES = [
