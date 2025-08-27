@@ -21,29 +21,29 @@ jobs:
 
       - name: Notify agents (always)
         if: always()
+        shell: bash
         env:
           WEBHOOK: ${{ secrets.AGENTS_WEBHOOK_URL }}
           TOKEN:   ${{ secrets.AGENTS_WEBHOOK_TOKEN }}
-        shell: bash
+          RUN_ID:  ${{ github.run_id }}
+          JOB:     lint_and_scan
+          REPO:    ${{ github.repository }}
+          BRANCH:  ${{ github.head_ref || github.ref_name }}
+          PR:      ${{ github.event.pull_request.number || '' }}
+          STATUS:  ${{ job.status }}
         run: |
           set -euo pipefail
-          if [ -n "${WEBHOOK:-}" ]; then
-            status="${{ job.status }}"
-            sev=$([ "$status" = "success" ] && echo "low" || echo "high")
-            run_id="${{ github.run_id }}"
-            job="lint_and_scan"
-            repo="${{ github.repository }}"
-            branch="${{ github.head_ref || github.ref_name }}"
-            pr="${{ github.event.pull_request.number || 0 }}"
-            curl -sS -X POST "$WEBHOOK"               -H "Content-Type: application/json"               -H "X-Agent-Token: ${TOKEN:-}"               -d @- <<JSON
-            {
-              "event": "finding.${sev}",
-              "repo": "${repo}",
-              "job_id": "gha-${run_id}",
-              "finding_id": "gha-${run_id}-${job}",
-              "file_path": ".github/workflows/ci.yml",
-              "detector_id": "gha_status",
-              "severity": "${sev}",
-              "recommendation": "CI job ${job} is ${status} on ${branch} (PR #${pr})"
-            }JSON
+          if [[ -n "${WEBHOOK:-}" && -n "${TOKEN:-}" ]]; then
+            [[ "$STATUS" == "success" ]] && sev=low || sev=high
+            json=$(printf '%s' \
+              '{"event":"finding.'"$sev"'","repo":"'"$REPO"'","job_id":"gha-'"$RUN_ID"'",'\
+              '"finding_id":"gha-'"$RUN_ID"'-'"$JOB"'","file_path":".github/workflows/ci.yml",'\
+              '"detector_id":"gha_status","severity":"'"$sev"'","recommendation":'\
+              '"CI job '"$JOB"' is '"$STATUS"' on '"$BRANCH"' (PR #'"$PR"')"}')
+            curl -sS -X POST "$WEBHOOK" \
+              -H "Content-Type: application/json" \
+              -H "X-Agent-Token: $TOKEN" \
+              -d "$json"
+          else
+            echo "WEBHOOK/TOKEN not set, skipping notify."
           fi
