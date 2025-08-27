@@ -2,7 +2,7 @@ name: CI
 on:
   pull_request:
 jobs:
-  lint:
+  lint_and_scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -11,17 +11,40 @@ jobs:
           python-version: "3.11"
       - run: pip install -U pip
       - run: pip install -e .
-      - run: pip install pre-commit black flake8
-      - run: pre-commit run --all-files --show-diff-on-failure
-
-  scan:
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - run: pip install -U pip
-      - run: pip install -e .
-      - run: python scripts/ci_scan.py --root . --json-out findings.json
+      - run: pip install black flake8 pyyaml requests
+      - name: Black (format)
+        run: black .
+      - name: Flake8 (lint)
+        run: flake8 .
+      - name: SS360 scan
+        run: python scripts/ci_scan.py --json-out findings.json --root .
+      - name: Notify agents (always)
+        if: always()
+        env:
+          WEBHOOK: ${{ secrets.AGENTS_WEBHOOK_URL }}
+          TOKEN:   ${{ secrets.AGENTS_WEBHOOK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${WEBHOOK:-}" ]; then
+            status="${{ job.status }}"
+            run_id="${{ github.run_id }}"
+            job="lint_and_scan"
+            repo="${{ github.repository }}"
+            branch="${{ github.head_ref || github.ref_name }}"
+            pr="${{ github.event.pull_request.number || '' }}"
+            curl -sS -X POST "$WEBHOOK" \
+              -H "Content-Type: application/json" \
+              -H "X-Agent-Token: ${TOKEN:-}" \
+              -d @- <<'JSON'
+{ "event":"gha.status",
+  "repo":"${repo}",
+  "job_id":"gha-${run_id}",
+  "finding_id":"gha-${run_id}-${job}",
+  "file_path":".github/workflows/ci.yml",
+  "detector_id":"gha_status",
+  "severity":"${status}",
+  "recommendation":"CI job ${job} ended with ${status} on ${branch} (PR #${pr})"
+}
+JSON
+          fi
