@@ -1,7 +1,8 @@
-import os, time, requests
+import os
+import time
+import requests
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import psycopg
 from psycopg_pool import ConnectionPool
 
 APP_NAME = "ss360-api"
