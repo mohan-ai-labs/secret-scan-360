@@ -12,3 +12,5 @@ per-file-ignores =
     services/api/app/main.py: E401,F401,E501
 
     agents/dev/run_agent_impl.py: E501
+extend-ignore = E203,W503
+max-line-length = 88
