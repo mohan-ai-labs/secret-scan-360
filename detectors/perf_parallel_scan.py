@@ -15,7 +15,7 @@ def detect(lines: Iterable[str]) -> Iterator[Dict[str, object]]:
         if PATTERN.search(line):
             yield {
                 "id": "perf_parallel_scan",
-                "title": "Parallel Scan + Excludes",
+                "title": "Perf Parallel + Excludes",
                 "severity": "high",
                 "description": "Sensitive value detected",
                 "line": i,
