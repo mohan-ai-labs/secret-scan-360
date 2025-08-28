@@ -36,11 +36,17 @@ jobs:
           WEBHOOK: ${{ secrets.AGENTS_WEBHOOK_URL }}
           TOKEN:   ${{ secrets.AGENTS_WEBHOOK_TOKEN }}
         run: |
-          status="${{ job.status }}"
-          sev=$([ "$status" = "success" ] && echo low || echo high)
-          run_id="${{ github.run_id }}"
-          job="build"
-          repo="${{ github.repository }}"
-          branch="${{ github.head_ref || github.ref_name }}"
-          pr="${{ github.event.pull_request.number || 0 }}"
-          curl -sS -X POST "$WEBHOOK"             -H "Content-Type: application/json"             -H "X-Agent-Token: ${TOKEN:-}"             -d "{"event":"finding.${sev}","repo":"${repo}","job_id":"gha-${run_id}","finding_id":"gha-${run_id}-${job}","file_path":".github/workflows/ci.yml","detector_id":"gha_status","severity":"${sev}","recommendation":"CI job ${job} is ${status} on ${branch} (PR #${pr})"}"
+          set -euo pipefail
+          if [ -n "${WEBHOOK:-}" ]; then
+            status="${{ job.status }}"
+            sev=$([ "$status" = "success" ] && echo low || echo high)
+            run_id="${{ github.run_id }}"
+            job="build"
+            repo="${{ github.repository }}"
+            branch="${{ github.head_ref || github.ref_name }}"
+            pr="${{ github.event.pull_request.number || 0 }}"
+            cat > payload.json <<EOF
+{"event":"finding.${sev}","repo":"${repo}","job_id":"gha-${run_id}","finding_id":"gha-${run_id}-${job}","file_path":".github/workflows/ci.yml","detector_id":"gha_status","severity":"${sev}","recommendation":"CI job ${job} is ${status} on ${branch} (PR #${pr})"}
+EOF
+            curl -sS -X POST "$WEBHOOK"               -H "Content-Type: application/json"               -H "X-Agent-Token: ${TOKEN:-}"               --data-binary @payload.json
+          fi
