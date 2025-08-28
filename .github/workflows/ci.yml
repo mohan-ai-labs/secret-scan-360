@@ -49,6 +49,6 @@ jobs:
               "severity": "$sev",
               "recommendation": "CI job $job is $status on $branch (PR #$pr)"
             }
-EOF
+          EOF
             curl -sS -X POST "$WEBHOOK" -H "Content-Type: application/json" -H "X-Agent-Token: ${TOKEN:-}" --data-binary @payload.json
           fi
