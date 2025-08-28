@@ -45,10 +45,8 @@ jobs:
             repo="${{ github.repository }}"
             branch="${{ github.head_ref || github.ref_name }}"
             pr="${{ github.event.pull_request.number || 0 }}"
-            cat > payload.json <<EOF
-            {"event":"finding.${sev}","repo":"${repo}","job_id":"gha-${run_id}","finding_id":"gha-${run_id}-${job}","file_path":".github/workflows/ci.yml","detector_id":"gha_status","severity":"${sev}","recommendation":"CI job ${job} is ${status} on ${branch} (PR #${pr})"}
-            JSON
-
+            printf '{"event":"finding.%s","repo":"%s","job_id":"gha-%s","finding_id":"gha-%s-%s","file_path":".github/workflows/ci.yml","detector_id":"gha_status","severity":"%s","recommendation":"CI job %s is %s on %s (PR #%s)"}\n' \
+              "$sev" "$repo" "$run_id" "$run_id" "$job" "$sev" "$job" "$status" "$branch" "$pr" > payload.json
             curl -sS -X POST "$WEBHOOK" \
               -H "Content-Type: application/json" \
               -H "X-Agent-Token: ${TOKEN:-}" \
