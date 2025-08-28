@@ -2,8 +2,7 @@
 """
 Fail CI if code changed but tests did not.
 
-- Looks at diff between the PR base and head.
-- If any code-y paths changed and nothing in tests/ changed, exit 1.
+Robust against shallow clones: we resolve a concrete base SHA from origin/<base>.
 """
 
 from __future__ import annotations
@@ -21,40 +20,58 @@ CODE_PREFIXES: tuple[str, ...] = (
 )
 
 
-def _run(cmd: list[str]) -> str:
-    return subprocess.check_output(cmd, text=True).strip()
+def sh(args: list[str], check: bool = True) -> str:
+    return subprocess.run(args, text=True, check=check,
+                          capture_output=True).stdout.strip()
 
 
-def _diff_names(base: str, head: str) -> list[str]:
-    out = _run(["git", "diff", "--name-only", f"{base}...{head}"])
-    return [ln for ln in out.splitlines() if ln]
+def rev(ref: str) -> str:
+    try:
+        return sh(["git", "rev-parse", ref])
+    except Exception:
+        return ""
 
 
 def main() -> int:
-    base_ref = os.getenv("GITHUB_BASE_REF") or "origin/main"
+    base_branch = os.getenv("GITHUB_BASE_REF") or "main"
     head_ref = os.getenv("GITHUB_SHA") or "HEAD"
-    subprocess.run(["git", "fetch", "--depth=1", "origin", base_ref], check=False)
-    files = _diff_names(base_ref, head_ref)
-    if not files:
-        print("No changed files; skipping tests-required check.")
+
+    # Make sure we have the base branch in this shallow clone
+    subprocess.run(["git", "fetch", "--depth=50", "origin", base_branch],
+                   check=False)
+
+    # Resolve a concrete base SHA with sane fallbacks
+    base = (
+        rev(f"origin/{base_branch}")
+        or rev(base_branch)
+        or rev("origin/main")
+        or rev("main")
+    )
+    if not base:
+        print(f"[guard] Could not resolve base for '{base_branch}', "
+              "skipping tests-required check.", file=sys.stderr)
         return 0
 
-    changed_tests = any(f.startswith(TEST_DIRS) for f in files)
-    changed_code = any(
-        f.startswith(prefix.rstrip("/")) or f == prefix for f in files for prefix in CODE_PREFIXES
-    )
+    changed = sh(["git", "diff", "--name-only", f"{base}...{head_ref}"]).splitlines()
+    if not changed:
+        print("[guard] No changed files; skipping.")
+        return 0
+
+    changed_tests = any(f.startswith(TEST_DIRS) for f in changed)
+    def is_code(f: str) -> bool:
+        return any(f.startswith(p.rstrip('/')) or f == p for p in CODE_PREFIXES)
+
+    changed_code = any(is_code(f) for f in changed)
 
     if changed_code and not changed_tests:
-        print("Changed code without matching tests:", file=sys.stderr)
-        for f in files:
-            if not f.startswith(TEST_DIRS) and any(
-                f.startswith(p.rstrip("/")) or f == p for p in CODE_PREFIXES
-            ):
+        print("[guard] Changed code without matching tests:", file=sys.stderr)
+        for f in changed:
+            if is_code(f) and not any(f.startswith(t) for t in TEST_DIRS):
                 print(f"  - {f}", file=sys.stderr)
         print("\nPlease add/update tests under tests/.", file=sys.stderr)
         return 1
 
-    print("Tests check passed.")
+    print("[guard] Tests check passed.")
     return 0
 
 
