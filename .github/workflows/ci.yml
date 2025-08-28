@@ -38,16 +38,17 @@ jobs:
             repo="${{ github.repository }}"
             branch="${{ github.head_ref || github.ref_name }}"
             pr="${{ github.event.pull_request.number || 0 }}"
-            cat > payload.json <<EOF
+            cat >payload.json <<EOF
             {
-              "event": "finding.__SEV__",
-              "repo": "__REPO__",
-              "job_id": "gha-__RUN_ID__",
-              "finding_id": "gha-__RUN_ID__-__JOB__",
+              "event": "finding.$sev",
+              "repo": "$repo",
+              "job_id": "gha-$run_id",
+              "finding_id": "gha-$run_id-$job",
               "file_path": ".github/workflows/ci.yml",
               "detector_id": "gha_status",
-              "severity": "__SEV__",
-              "recommendation": "CI job __JOB__ is __STATUS__ on __BRANCH__ (PR #__PR__)"
-              } JSON
-            curl -sS -X POST "$WEBHOOK"  -H "Content-Type: application/json" -H "X-Agent-Token: ${TOKEN:-}" --data-binary @payload.json
+              "severity": "$sev",
+              "recommendation": "CI job $job is $status on $branch (PR #$pr)"
+            }
+EOF
+            curl -sS -X POST "$WEBHOOK" -H "Content-Type: application/json" -H "X-Agent-Token: ${TOKEN:-}" --data-binary @payload.json
           fi
