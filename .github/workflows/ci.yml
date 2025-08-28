@@ -11,10 +11,36 @@ jobs:
           python-version: "3.11"
       - run: pip install -U pip
       - run: pip install -e .
-      - run: pip install black flake8 pyyaml
+      - run: pip install black flake8 pyyaml pytest pytest-cov
       - name: Black (format)
         run: black .
       - name: Flake8 (lint)
         run: flake8 .
+      - name: Unit tests
+        run: pytest -q --disable-warnings
+      - name: Test guardrail (fail if src changed without tests)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${{ github.base_ref }}" ]; then
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"               :refs/remotes/origin/"${{ github.base_ref }}"
+            python scripts/require_tests_changed.py "${{ github.base_ref }}"
+          else
+            echo "No base_ref; skipping guardrail."
+          fi
       - name: SS360 scan
         run: python scripts/ci_scan.py --json-out findings.json --root .
+      - name: Notify agents (always)
+        if: always()
+        env:
+          WEBHOOK: ${{ secrets.AGENTS_WEBHOOK_URL }}
+          TOKEN:   ${{ secrets.AGENTS_WEBHOOK_TOKEN }}
+        run: |
+          status="${{ job.status }}"
+          sev=$([ "$status" = "success" ] && echo low || echo high)
+          run_id="${{ github.run_id }}"
+          job="build"
+          repo="${{ github.repository }}"
+          branch="${{ github.head_ref || github.ref_name }}"
+          pr="${{ github.event.pull_request.number || 0 }}"
+          curl -sS -X POST "$WEBHOOK"             -H "Content-Type: application/json"             -H "X-Agent-Token: ${TOKEN:-}"             -d "{"event":"finding.${sev}","repo":"${repo}","job_id":"gha-${run_id}","finding_id":"gha-${run_id}-${job}","file_path":".github/workflows/ci.yml","detector_id":"gha_status","severity":"${sev}","recommendation":"CI job ${job} is ${status} on ${branch} (PR #${pr})"}"
