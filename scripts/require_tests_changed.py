@@ -11,10 +11,8 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from typing import Iterable, List  # noqa: F401  (intentionally kept out; remove if not needed)
 
 TEST_DIRS: tuple[str, ...] = ("tests/",)
-# Treat these as “code changed” indicators for your repo
 CODE_PREFIXES: tuple[str, ...] = (
     "src/",
     "services/",
@@ -35,10 +33,7 @@ def _diff_names(base: str, head: str) -> list[str]:
 def main() -> int:
     base_ref = os.getenv("GITHUB_BASE_REF") or "origin/main"
     head_ref = os.getenv("GITHUB_SHA") or "HEAD"
-
-    # Ensure we can diff against base (checkout@v4 defaults to depth=1)
     subprocess.run(["git", "fetch", "--depth=1", "origin", base_ref], check=False)
-
     files = _diff_names(base_ref, head_ref)
     if not files:
         print("No changed files; skipping tests-required check.")
