@@ -4,9 +4,7 @@ from typing import Iterable, Dict, Iterator
 
 
 # Simple first-cut regex. You can refine via spec if needed.
-PATTERN = re.compile(
-    r"https://hooks\.slack\.com/services/[A-Z0-9]{9}/[A-Z0-9]{9}/[A-Za-z0-9]{24}"
-)
+PATTERN = re.compile(r"https://hooks\.slack\.com/services/[A-Z0-9]{9}/[A-Z0-9]{9}/[A-Za-z0-9]{24}")
 
 
 def detect(lines: Iterable[str]) -> Iterator[Dict[str, object]]:

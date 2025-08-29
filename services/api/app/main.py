@@ -11,9 +11,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 app = FastAPI(title=APP_NAME)
 
 # DB pool (psycopg3)
-pool = ConnectionPool(
-    DATABASE_URL, min_size=1, max_size=4, kwargs={"connect_timeout": 5}
-)
+pool = ConnectionPool(DATABASE_URL, min_size=1, max_size=4, kwargs={"connect_timeout": 5})
 
 
 class ScanInput(BaseModel):
@@ -74,9 +72,7 @@ def health():
 def scan(input: ScanInput):
     t0 = time.time()
     try:
-        r = requests.post(
-            f"{AGENTS_URL}/run", json={"repo_url": input.repo_url}, timeout=1800
-        )
+        r = requests.post(f"{AGENTS_URL}/run", json={"repo_url": input.repo_url}, timeout=1800)
         r.raise_for_status()
         result = r.json()
     except Exception as e:

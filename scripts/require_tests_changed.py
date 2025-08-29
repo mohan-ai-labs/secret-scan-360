@@ -21,9 +21,7 @@ CODE_PREFIXES: tuple[str, ...] = (
 
 
 def sh(args: list[str], check: bool = True) -> str:
-    return subprocess.run(
-        args, text=True, check=check, capture_output=True
-    ).stdout.strip()
+    return subprocess.run(args, text=True, check=check, capture_output=True).stdout.strip()
 
 
 def rev(ref: str) -> str:
@@ -41,16 +39,10 @@ def main() -> int:
     subprocess.run(["git", "fetch", "--depth=50", "origin", base_branch], check=False)
 
     # Resolve a concrete base SHA with sane fallbacks
-    base = (
-        rev(f"origin/{base_branch}")
-        or rev(base_branch)
-        or rev("origin/main")
-        or rev("main")
-    )
+    base = rev(f"origin/{base_branch}") or rev(base_branch) or rev("origin/main") or rev("main")
     if not base:
         print(
-            f"[guard] Could not resolve base for '{base_branch}', "
-            "skipping tests-required check.",
+            f"[guard] Could not resolve base for '{base_branch}', " "skipping tests-required check.",
             file=sys.stderr,
         )
         return 0

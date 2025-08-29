@@ -2,9 +2,7 @@ import re
 from .base import Detector, Finding
 
 # Classic GH tokens start with ghp_, gho_, github_pat_ etc.
-PAT = re.compile(
-    r"(ghp|gho|ghu|ghs|ghr)_[0-9a-zA-Z]{36,255}|github_pat_[0-9a-zA-Z_]{82,255}"
-)
+PAT = re.compile(r"(ghp|gho|ghu|ghs|ghr)_[0-9a-zA-Z]{36,255}|github_pat_[0-9a-zA-Z_]{82,255}")
 
 
 class DetectorImpl(Detector):

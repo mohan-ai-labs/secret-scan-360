@@ -105,9 +105,7 @@ DEFAULT_REGEX_RULES = [
 ]
 
 
-DEFAULT_CONFIG_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "config", "detectors.yaml"
-)
+DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "config", "detectors.yaml")
 
 
 def build_registry(config_path: Optional[str] = None) -> DetectorRegistry:

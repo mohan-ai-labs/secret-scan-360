@@ -42,11 +42,7 @@ class RegexDetector(Detector):
             for m in rule["pattern"].finditer(text):
                 line = text.count("\n", 0, m.start()) + 1
                 raw = m.group(0)
-                shown = (
-                    (raw[:4] + "…" + raw[-4:])
-                    if rule["redact"] and len(raw) > 12
-                    else raw
-                )
+                shown = (raw[:4] + "…" + raw[-4:]) if rule["redact"] and len(raw) > 12 else raw
                 findings.append(
                     Finding(
                         path=path,

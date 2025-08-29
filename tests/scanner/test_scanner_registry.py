@@ -9,9 +9,7 @@ def test_scanner_detects_aws_and_private_key(tmp_path: Path):
     f1 = tmp_path / "creds.txt"
     f1.write_text("token AKIA1234567890ABCDE end")
     f2 = tmp_path / "key.pem"
-    f2.write_text(
-        "-----BEGIN RSA PRIVATE KEY-----\nabc\n-----END RSA PRIVATE KEY-----\n"
-    )
+    f2.write_text("-----BEGIN RSA PRIVATE KEY-----\nabc\n-----END RSA PRIVATE KEY-----\n")
 
     # Load registry from seed YAML (repo path)
     cfg = Path("services/agents/app/config/detectors.yaml")
