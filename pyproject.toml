@@ -22,7 +22,7 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["ss360*"]
+include = ["ss360*","secret_scan_360*"]
 
 # (optional) ensure package data in src/ss360/** is included
 [tool.setuptools.package-data]
