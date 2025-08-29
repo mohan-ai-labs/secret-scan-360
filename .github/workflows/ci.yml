@@ -6,7 +6,7 @@ jobs:
   lint_and_scan:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write    # allow auto-commit to PR branch
       actions: read
     steps:
       - uses: actions/checkout@v4
@@ -23,18 +23,23 @@ jobs:
           pip install -e .
           pip install black flake8 pytest pyyaml
 
-      - name: Black (check)
-        run: black --check .
+      # ----- Auto-format & commit back if needed -----
+      - name: Run Black (write)
+        run: black .
+
+      - name: Auto-commit formatting (if changed)
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: format with Black"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # ----------------------------------------------
 
       - name: Flake8 (lint)
         run: flake8 .
 
       - name: SS360 scan
         run: python scripts/ci_scan.py --json-out findings.json --root .
-
-      # Optional – keep only if you actually have this script in the repo
-      # - name: Tests required if code changed
-      #   run: python scripts/require_tests_changed.py
 
       - name: Notify agents (always)
         if: always()
@@ -51,7 +56,6 @@ jobs:
             repo="${{ github.repository }}"
             branch="${{ github.head_ref || github.ref_name }}"
             pr="${{ github.event.pull_request.number || '' }}"
-
             cat > payload.json <<EOF
             {
               "event": "gha.status",
@@ -63,7 +67,7 @@ jobs:
               "status": "$status",
               "branch": "$branch",
               "pr_number": "$pr"
-            } 
+            }
           EOF
             curl -sS -X POST "$WEBHOOK" \
               -H "Content-Type: application/json" \
