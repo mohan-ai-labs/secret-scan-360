@@ -1,5 +1,8 @@
 #!/usr/bin/env python3 
-import json, os, sys, urllib.request
+import json
+import os
+import sys
+import urllib.request
 
 def main():
     webhook = os.getenv("WEBHOOK", "")
