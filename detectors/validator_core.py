@@ -19,4 +19,4 @@ def detect(lines: Iterable[str]) -> Iterator[Dict[str, object]]:
                 "severity": "high",
                 "description": "Sensitive value detected",
                 "line": i,
-            }
+            } 
