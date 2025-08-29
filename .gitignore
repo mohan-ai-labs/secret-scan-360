@@ -12,3 +12,7 @@ venv/
 *.zip
 .DS_Store
 *.egg-info/
+findings.json
+*.egg-info/
+dist/
+build/
