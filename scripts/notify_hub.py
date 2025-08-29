@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#test
 import json, os, sys, urllib.request
 
 def main():
