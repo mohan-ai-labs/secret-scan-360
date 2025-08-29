@@ -27,35 +27,10 @@ jobs:
         env:
           WEBHOOK: ${{ secrets.AGENTS_WEBHOOK_URL }}
           TOKEN:   ${{ secrets.AGENTS_WEBHOOK_TOKEN }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -n "${WEBHOOK:-}" ]; then
-            status="${{ job.status }}"
-            sev=$([ "$status" = "success" ] && echo low || echo high)
-            run_id="${{ github.run_id }}"
-            job="${{ github.job }}"
-            repo="${{ github.repository }}"
-            branch="${{ github.head_ref || github.ref_name }}"
-            pr="${{ github.event.pull_request.number || 0 }}"
-            cat >payload.json <<EOF
-            {
-              "event": "finding.$sev",
-              "repo": "$repo",
-              "job_id": "gha-$run_id",
-              "finding_id": "gha-$run_id-$job",
-              "file_path": ".github/workflows/ci.yml",
-              "detector_id": "gha_status",
-              "severity": "$sev",
-              "recommendation": "CI job $job is $status on $branch (PR #$pr)"
-            }
-          EOF
-            curl -sS -X POST "$WEBHOOK" -H "Content-Type: application/json" -H "X-Agent-Token: ${TOKEN:-}" --data-binary @payload.json
-          fi
-      
-      - name: Upload findings.json
-        if: always() && hashFiles('findings.json') != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: findings
-          path: findings.json
+          JOB_STATUS: ${{ job.status }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_JOB: ${{ github.job }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.head_ref || github.ref_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+        run: python scripts/notify_hub.py
