@@ -32,30 +32,22 @@ jobs:
           set -euo pipefail
           if [ -n "${WEBHOOK:-}" ]; then
             status="${{ job.status }}"
-            sev=$([ "$status" = "success" ] && echo low || echo high)
             run_id="${{ github.run_id }}"
             job="${{ github.job }}"
             repo="${{ github.repository }}"
             branch="${{ github.head_ref || github.ref_name }}"
-            pr="${{ github.event.pull_request.number || 0 }}"
+            pr="${{ github.event.pull_request.number || '' }}"
             cat >payload.json <<EOF
             {
-              "event": "finding.$sev",
+              "event": "gha.status",
               "repo": "$repo",
+              "status": "$status",
+              "job": "$job",
               "job_id": "gha-$run_id",
-              "finding_id": "gha-$run_id-$job",
-              "file_path": ".github/workflows/ci.yml",
-              "detector_id": "gha_status",
-              "severity": "$sev",
+              "branch": "$branch",
+              "pr_number": "$pr"
               "recommendation": "CI job $job is $status on $branch (PR #$pr)"
             }
           EOF
             curl -sS -X POST "$WEBHOOK" -H "Content-Type: application/json" -H "X-Agent-Token: ${TOKEN:-}" --data-binary @payload.json
           fi
-      
-      - name: Upload findings.json
-        if: always() && hashFiles('findings.json') != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: findings
-          path: findings.json
