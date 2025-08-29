@@ -63,7 +63,8 @@ jobs:
               "status": "$status",
               "branch": "$branch",
               "pr_number": "$pr"
-            } EOF
+            } 
+          EOF
             curl -sS -X POST "$WEBHOOK" \
               -H "Content-Type: application/json" \
               -H "X-Agent-Token: ${TOKEN:-}" \
