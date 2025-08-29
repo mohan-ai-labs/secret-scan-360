@@ -1,0 +1,14 @@
+Metadata-Version: 2.4
+Name: secret-scan-360
+Version: 0.0.1
+Summary: Secret Scan 360
+Author: SS360 Agents
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pyyaml
+Dynamic: license-file
+
+
+- [Slack Webhook Detector](detectors/slack_webhook.py) — detects Slack incoming webhook URLs
