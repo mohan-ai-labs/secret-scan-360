@@ -49,9 +49,7 @@ jobs:
               "recommendation": "CI job $job is $status on $branch (PR #$pr)"
             } 
             EOF
-            if [ -n "${WEBHOOK:-}" ]; then
               echo "Sending to Hub: $(cat payload.json)"
-              # Capture response & HTTP code for debugging
               http_code=$(curl -sS -o /tmp/resp.json -w "%{http_code}" \
                 -X POST "$WEBHOOK" \
                 -H "Content-Type: application/json" \
@@ -59,6 +57,4 @@ jobs:
                 --data-binary @payload.json || true)
               echo "Hub HTTP: $http_code"
               echo "Hub response:"; cat /tmp/resp.json || true
-          else
-            echo "WEBHOOK not set; skipping notify."
           fi
