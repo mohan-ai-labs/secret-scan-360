@@ -1,19 +1,21 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "secret-scan-360"
 version = "0.0.1"
-description = "Secret Scan 360"
+description = "Secret Scan 360 — fast, policy-aware secret detection"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "SS360 Agents" }]
-dependencies = ["pyyaml"]
+authors = [{ name = "mohan-ai-labs" }]
 
-[project.scripts]
-ss360 = "ss360.cli:main"
+# keep runtime deps minimal; dev tooling goes in optional deps
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["black==24.4.2", "flake8==7.0.0", "pytest==8.3.2", "pyyaml"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -21,3 +23,12 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["ss360*"]
+
+# (optional) ensure package data in src/ss360/** is included
+[tool.setuptools.package-data]
+"ss360" = ["py.typed", "**/*.txt", "**/*.yml", "**/*.yaml", "**/*.json"]
+
+# Black config just to keep the same style locally
+[tool.black]
+line-length = 130
+target-version = ["py311"]
