@@ -47,7 +47,8 @@ jobs:
               "branch": "$branch",
               "pr_number": "$pr"
               "recommendation": "CI job $job is $status on $branch (PR #$pr)"
-            } EOF
+            } 
+            EOF
             if [ -n "${WEBHOOK:-}" ]; then
               echo "Sending to Hub: $(cat payload.json)"
               # Capture response & HTTP code for debugging
