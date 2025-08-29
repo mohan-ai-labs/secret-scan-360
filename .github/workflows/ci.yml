@@ -47,5 +47,5 @@ jobs:
               "branch": "${branch}",
               "pr_number": "${pr}"
             }
-JSON
+          JSON
           fi
