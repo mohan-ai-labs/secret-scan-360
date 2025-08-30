@@ -1,7 +1,7 @@
 name: SS360 Agent Workflow
 
 # Trigger PM agent on new issues and run tests daily
-on:
+"on":
   issues:
     types: [opened]
   schedule:
