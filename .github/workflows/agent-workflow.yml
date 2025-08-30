@@ -1,0 +1,64 @@
+name: SS360 Agent Workflow
+on:
+  issues:
+    types: [opened, edited]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    
+jobs:
+  trigger-pm-agent:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trigger PM Agent
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          HOST_IP: ${{ secrets.HOST_IP }}
+        run: |
+          curl -X POST http://${HOST_IP}:8000/api/pm/tasks \
+            -H "Content-Type: application/json" \
+            -d '{
+              "issue_number": ${{ github.event.issue.number }},
+              "repo": "mohan-ai-labs/secret-scan-360"
+            }'
+
+  trigger-dev-agent:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'dev-ready')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trigger Dev Agent
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          HOST_IP: ${{ secrets.HOST_IP }}
+        run: |
+          curl -X POST http://${HOST_IP}:8000/api/dev/tasks \
+            -H "Content-Type: application/json" \
+            -d '{
+              "issue_number": ${{ github.event.issue.number }},
+              "repo": "mohan-ai-labs/secret-scan-360"
+            }'
+
+  trigger-test-agent:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trigger Test Agent
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          HOST_IP: ${{ secrets.HOST_IP }}
+        run: |
+          curl -X POST http://${HOST_IP}:8000/api/test/tasks \
+            -H "Content-Type: application/json" \
+            -d '{
+              "pr_number": ${{ github.event.pull_request.number }},
+              "repo": "mohan-ai-labs/secret-scan-360"
+            }'
