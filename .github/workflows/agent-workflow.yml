@@ -1,0 +1,50 @@
+name: SS360 Agent Workflow
+
+# Trigger PM agent on new issues and run tests daily
+on:
+  issues:
+    types: [opened]
+  schedule:
+    # Run tests daily at 00:00 UTC
+    - cron: '0 0 * * *'
+
+jobs:
+  # PM Agent - Handles issue triage and coordinates with dev agent
+  trigger-pm-agent:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trigger PM Agent
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          curl -X POST http://${HOST_IP}:8080/api/pm/tasks \
+            -H "Content-Type: application/json" \
+            -d '{
+              "issue_number": ${{ github.event.issue.number }},
+              "repo": "mohan-ai-labs/secret-scan-360",
+              "event": "new_issue"
+            }'
+
+  # Daily Test Run
+  daily-test-run:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Daily Tests
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          curl -X POST http://${HOST_IP}:8080/api/test/tasks \
+            -H "Content-Type: application/json" \
+            -d '{
+              "repo": "mohan-ai-labs/secret-scan-360",
+              "event": "daily_test",
+              "scan_type": "full"
+            }'
