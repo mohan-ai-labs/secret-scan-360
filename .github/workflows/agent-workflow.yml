@@ -1,5 +1,5 @@
 name: SS360 Agent Workflow
-on:
+"on":
   issues:
     types: [opened, edited]
   pull_request:
