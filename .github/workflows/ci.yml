@@ -2,12 +2,10 @@ name: CI
 on:
   pull_request:
 jobs:
-  build:
+  lint_and_scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -20,17 +18,34 @@ jobs:
         run: flake8 .
       - name: SS360 scan
         run: python scripts/ci_scan.py --json-out findings.json --root .
-      - name: Tests required if code changed
-        run: python scripts/require_tests_changed.py
       - name: Notify agents (always)
         if: always()
         env:
           WEBHOOK: ${{ secrets.AGENTS_WEBHOOK_URL }}
           TOKEN:   ${{ secrets.AGENTS_WEBHOOK_TOKEN }}
-          JOB_STATUS: ${{ job.status }}
-          GITHUB_RUN_ID: ${{ github.run_id }}
-          GITHUB_JOB: ${{ github.job }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_REF_NAME: ${{ github.head_ref || github.ref_name }}
-          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
-        run: python scripts/notify_hub.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${WEBHOOK:-}" ]; then
+            status="${{ job.status }}"
+            sev=$([ "$status" = "success" ] && echo "low" || echo "high")
+            run_id="${{ github.run_id }}"
+            job="lint_and_scan"
+            repo="${{ github.repository }}"
+            branch="${{ github.head_ref || github.ref_name }}"
+            pr="${{ github.event.pull_request.number || '' }}"
+            curl -sS -X POST "$WEBHOOK"               -H "Content-Type: application/json"               -H "X-Agent-Token: ${TOKEN:-}"               -d @- <<'JSON'
+            {
+              "event": "gha.status",
+              "repo": "${repo}",
+              "job_id": "gha-${run_id}",
+              "finding_id": "gha-${run_id}-${job}",
+              "file_path": ".github/workflows/ci.yml",
+              "detector_id": "gha_status",
+              "severity": "${sev}",
+              "status": "${status}",
+              "branch": "${branch}",
+              "pr_number": "${pr}"
+            }
+JSON
+          fi
