@@ -28,6 +28,11 @@ regex_detector:
       pattern: '\b(gh[pous]_[A-Za-z0-9]{20,})\b'
       redact: true
 
+    - name: "Slack Webhook"
+      kind: "Slack Webhook"
+      pattern: 'https://hooks\.slack\.com/services/[A-Z0-9]{9}/[A-Z0-9]{9}/[A-Za-z0-9]{24}'
+      redact: true
+
 # Legacy style configuration used by older tests
 detectors:
   - type: regex

@@ -1,0 +1,4 @@
+version: 1
+validators:
+  allow_network: false
+  global_qps: 2.0
