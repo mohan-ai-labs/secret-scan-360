@@ -24,7 +24,9 @@ def test_version_matches_package_metadata():
 def test_version_format():
     """Test that version follows semantic versioning pattern."""
     import re
-    
+
     # Basic semver pattern (major.minor.patch with optional pre-release)
-    semver_pattern = r'^\d+\.\d+\.\d+(?:-[a-zA-Z0-9]+(?:\.\d+)?)?$'
-    assert re.match(semver_pattern, __version__), f"Version {__version__} doesn't follow semver format"
+    semver_pattern = r"^\d+\.\d+\.\d+(?:-[a-zA-Z0-9]+(?:\.\d+)?)?$"
+    assert re.match(
+        semver_pattern, __version__
+    ), f"Version {__version__} doesn't follow semver format"

@@ -80,11 +80,13 @@ class TestSecretRedaction:
 
         # Should have 4 results (2 Slack validators + 2 network validators skipped)
         assert len(results) == 4
-        
+
         # Check that Slack validators have redacted evidence
-        slack_results = [r for r in results if "slack_webhook" in r.validator_name and r.evidence]
+        slack_results = [
+            r for r in results if "slack_webhook" in r.validator_name and r.evidence
+        ]
         assert len(slack_results) == 2
-        
+
         for result in slack_results:
             # Evidence should be redacted
             assert webhook_url not in result.evidence

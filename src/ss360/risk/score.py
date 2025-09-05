@@ -104,7 +104,7 @@ def calculate_risk_score(
     # Historical presence modifier
     history_modifier = _get_history_modifier(finding)
     score *= history_modifier
-    
+
     # Category modifier - boost actual, downrank expired/test
     category_modifier = _get_category_modifier(finding)
     score *= category_modifier
@@ -179,7 +179,7 @@ def _get_history_modifier(finding: Dict[str, Any]) -> float:
 def _get_category_modifier(finding: Dict[str, Any]) -> float:
     """Get risk modifier based on finding category."""
     category = finding.get("category", "unknown")
-    
+
     if category == "actual":
         return 1.3  # Boost actual findings significantly
     elif category == "expired":

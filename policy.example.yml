@@ -1,43 +1,8 @@
 version: 1
+budgets:
+  new_actual_findings: 0
+  new_expired_findings: 999
+  new_test_findings: 999
 validators:
   allow_network: false
   global_qps: 2.0
-
-# Category-based budget enforcement
-budgets:
-  # Strict enforcement: No actual findings allowed (fail CI on real secrets)
-  new_actual_findings: 0
-  
-  # Lenient on expired credentials (they pose less risk)
-  new_expired_findings: 999
-  
-  # Allow test/sample credentials
-  new_test_findings: 999
-  
-  # Unknown findings allowed but limited
-  new_unknown_findings: 10
-  
-  # Legacy total findings budget (for backward compatibility)
-  new_findings: 20
-  
-  # Risk score budget  
-  max_risk_score: 40
-
-# Add configuration to handle test secrets
-scan:
-  max_findings: 20  # Allow up to 20 findings instead of 0
-  
-# Or add exclusions for test files
-excludes:
-  - "run_tests.py"  # Exclude the test file entirely
-  - "**/test_*.py"  # Exclude all test files
-  - "**/tests/**"   # Exclude test directories
-
-# Or mark specific patterns as allowed for testing
-allowlist:
-  - pattern: "AKIA[0-9A-Z]{16}"  # AWS test keys
-    reason: "Test AWS credentials"
-    paths: ["run_tests.py"]
-  - pattern: "ghp_[a-zA-Z0-9]{36}"  # GitHub tokens
-    reason: "Test GitHub tokens" 
-    paths: ["run_tests.py"]

@@ -190,7 +190,12 @@ class TestRunValidators:
         # Second call should be rate limited
         results2 = run_validators(finding, config)
         assert len(results2) == 4  # All validators still run but get rate limited
-        rate_limited_results = [r for r in results2 if r.state == ValidationState.INDETERMINATE and "Rate limit exceeded" in r.reason]
+        rate_limited_results = [
+            r
+            for r in results2
+            if r.state == ValidationState.INDETERMINATE
+            and "Rate limit exceeded" in r.reason
+        ]
         # Only the Slack validators should be rate limited; network validators are already skipped
         assert len(rate_limited_results) >= 2
 
@@ -205,7 +210,9 @@ class TestRunValidators:
 
         # Should have 4 validators: 2 Slack (local), 2 network (skipped)
         assert len(results) == 4
-        slack_results = [r for r in results if r.validator_name == "slack_webhook_format"]
+        slack_results = [
+            r for r in results if r.validator_name == "slack_webhook_format"
+        ]
         assert len(slack_results) == 1
         assert slack_results[0].state == ValidationState.VALID
 
@@ -251,9 +258,14 @@ class TestDefaultRegistry:
 
         # Should have 4 validators: original Slack + 3 new ones
         assert len(validators) == 4
-        
+
         validator_names = [v.name for v in validators]
-        expected_names = ["slack_webhook_format", "slack_webhook_local", "gcp_sa_key_live", "azure_sas_live"]
-        
+        expected_names = [
+            "slack_webhook_format",
+            "slack_webhook_local",
+            "gcp_sa_key_live",
+            "azure_sas_live",
+        ]
+
         for name in expected_names:
             assert name in validator_names

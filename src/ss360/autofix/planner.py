@@ -6,22 +6,28 @@ from typing import Dict, List, Optional
 try:
     from ss360.risk.score import risk as compute_risk  # type: ignore
 except Exception:  # pragma: no cover
+
     def compute_risk(f: Dict) -> int:
         return 50
 
 
 @dataclass
 class PlanItem:
-    action: str               # "replace_literal" | "revoke_token" | "deactivate_key"
+    action: str  # "replace_literal" | "revoke_token" | "deactivate_key"
     path: str
     line: int
     replacement: Optional[str]
-    provider: Optional[str]   # "github" | "aws" | None
+    provider: Optional[str]  # "github" | "aws" | None
     reversible: bool = True
 
 
 class AutofixPlanner:
-    SUPPORTED_KINDS = {"GitHub Token", "GitHub PAT", "GitHub Personal Access Token", "AWS Access Key"}
+    SUPPORTED_KINDS = {
+        "GitHub Token",
+        "GitHub PAT",
+        "GitHub Personal Access Token",
+        "AWS Access Key",
+    }
 
     def __init__(self, *, confirmed_only: bool = True, risk_threshold: int = 70):
         self.confirmed_only = confirmed_only
@@ -48,7 +54,7 @@ class AutofixPlanner:
                     PlanItem(
                         action="replace_literal",
                         path=path,
-                        line= line,
+                        line=line,
                         replacement="${{ secrets.GH_PAT }}",
                         provider="github",
                         reversible=True,

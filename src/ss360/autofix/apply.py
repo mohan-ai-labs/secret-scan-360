@@ -48,7 +48,9 @@ def apply_plan(
         subprocess.check_call(["git", "checkout", branch], cwd=repo_path)
 
     subprocess.check_call(["git", "add", str(preview_path)], cwd=repo_path)
-    subprocess.check_call(["git", "commit", "-m", "SS360: add autofix plan preview"], cwd=repo_path)
+    subprocess.check_call(
+        ["git", "commit", "-m", "SS360: add autofix plan preview"], cwd=repo_path
+    )
     subprocess.check_call(["git", "push", "-u", "origin", branch], cwd=repo_path)
 
     pr_url = None
@@ -58,7 +60,17 @@ def apply_plan(
             "- [ ] Remove literals\n- [ ] Replace with secret refs\n- [ ] Rotate/revoke credentials\n"
         )
         out = subprocess.check_output(
-            ["gh", "pr", "create", "--title", pr_title, "--body", body, "--head", branch],
+            [
+                "gh",
+                "pr",
+                "create",
+                "--title",
+                pr_title,
+                "--body",
+                body,
+                "--head",
+                branch,
+            ],
             cwd=repo_path,
             text=True,
         ).strip()

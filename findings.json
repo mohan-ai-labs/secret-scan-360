@@ -1,0 +1,7 @@
+{
+  "root": "/home/runner/work/secret-scan-360/secret-scan-360/src",
+  "config": "/home/runner/work/secret-scan-360/secret-scan-360/services/agents/app/config/detectors.yaml",
+  "total": 0,
+  "findings": [],
+  "validation_results": {}
+}

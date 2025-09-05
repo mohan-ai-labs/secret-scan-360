@@ -9,6 +9,7 @@ def test_main_module_importable():
     """Test that the __main__ module can be imported."""
     try:
         import ss360.__main__
+
         assert True
     except ImportError:
         assert False, "ss360.__main__ module should be importable"
@@ -22,7 +23,7 @@ def test_main_module_executable():
             [sys.executable, "-m", "ss360", "--help"],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
         # The command should either succeed or fail gracefully (not crash with import error)
         # We don't check return code because --help might not be implemented yet
@@ -37,7 +38,7 @@ def test_main_module_executable():
 def test_main_module_has_main_guard():
     """Test that __main__.py has proper main guard."""
     import ss360.__main__ as main_module
-    
+
     # Check if the module has the standard if __name__ == "__main__" pattern
     # by checking if it's safe to import without side effects
-    assert hasattr(main_module, '__name__')
+    assert hasattr(main_module, "__name__")
