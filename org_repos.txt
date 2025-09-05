@@ -1,0 +1,16 @@
+https://github.com/mohan-ai-labs/secret-scan-360
+https://github.com/microsoft/vscode
+https://github.com/facebook/react
+https://github.com/tensorflow/tensorflow
+https://github.com/kubernetes/kubernetes
+https://github.com/golang/go
+https://github.com/nodejs/node
+https://github.com/python/cpython
+https://github.com/torvalds/linux
+https://github.com/rails/rails
+https://github.com/vuejs/vue
+https://github.com/angular/angular
+https://github.com/expressjs/express
+https://github.com/docker/docker
+https://github.com/elastic/elasticsearch
+https://github.com/apache/kafka

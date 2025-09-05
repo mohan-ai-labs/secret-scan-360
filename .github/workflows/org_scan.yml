@@ -1,0 +1,105 @@
+name: Nightly Org Scan
+
+on:
+  schedule:
+    - cron: "0 6 * * *"  # Run at 6 AM UTC daily
+  workflow_dispatch:     # Allow manual triggering
+
+jobs:
+  org-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -U pip
+          pip install -e .
+
+      - name: Read repositories from org_repos.txt
+        id: read-repos
+        run: |
+          # Read repos and convert newlines to space-separated format for CLI
+          REPOS=$(tr '\n' ' ' < org_repos.txt | sed 's/ $//')
+          echo "repos=$REPOS" >> $GITHUB_OUTPUT
+          echo "Found $(wc -l < org_repos.txt) repositories to scan"
+
+      - name: Run organization scan
+        run: |
+          ss360 org scan --repos ${{ steps.read-repos.outputs.repos }} --out .artifacts/org
+
+      - name: Run organization aggregation
+        run: |
+          ss360 org aggregate --in .artifacts/org --out .artifacts
+
+      - name: Upload scan artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: org-scan-results
+          path: .artifacts/**
+
+      - name: Create or update Org Scan Dashboard issue
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            
+            // Read the org summary markdown file
+            let summaryContent = '';
+            try {
+              summaryContent = fs.readFileSync('.artifacts/org-summary.md', 'utf8');
+            } catch (error) {
+              summaryContent = 'Error: org-summary.md not found or could not be read.';
+              console.log('Could not read org-summary.md:', error.message);
+            }
+            
+            const issueTitle = 'Org Scan Dashboard';
+            const issueBody = `# Organization Security Scan Dashboard
+            
+Last updated: ${new Date().toISOString()}
+
+${summaryContent}
+
+---
+*This issue is automatically updated by the nightly org scan workflow.*`;
+            
+            // Search for existing dashboard issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['org-scan-dashboard']
+            });
+            
+            const existingIssue = issues.find(issue => issue.title === issueTitle);
+            
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: issueBody
+              });
+              console.log(`Updated existing dashboard issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const { data: newIssue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['org-scan-dashboard']
+              });
+              console.log(`Created new dashboard issue #${newIssue.number}`);
+            }
