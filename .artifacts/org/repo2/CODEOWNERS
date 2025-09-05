@@ -1,0 +1,5 @@
+# DevOps team owns this deployment repo
+* @devops-team
+
+# Security team has oversight on secrets
+/deployment/secrets.yaml @security-team

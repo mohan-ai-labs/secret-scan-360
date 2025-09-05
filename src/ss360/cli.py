@@ -17,6 +17,7 @@ import argparse
 import os
 import sys
 import subprocess
+from pathlib import Path
 from . import __version__
 
 
@@ -61,6 +62,24 @@ def main(argv=None):
         help="only include findings of this category in results",
     )
 
+    # Add org command with subcommands
+    org_parser = sub.add_parser("org", help="organization-level operations")
+    org_sub = org_parser.add_subparsers(dest="org_cmd")
+    
+    agg_parser = org_sub.add_parser("aggregate", help="aggregate SARIF across repos")
+    agg_parser.add_argument(
+        "--in",
+        dest="input_dir",
+        default=".artifacts/org",
+        help="input directory containing repo SARIF files (default: .artifacts/org)"
+    )
+    agg_parser.add_argument(
+        "--out",
+        dest="output_dir",
+        default=".artifacts",
+        help="output directory for summary files (default: .artifacts)"
+    )
+
     args = p.parse_args(argv)
     if args.version or args.cmd == "version":
         print(__version__)
@@ -84,6 +103,18 @@ def main(argv=None):
         if args.only_category:
             cmd += ["--only-category", args.only_category]
         return subprocess.call(cmd)
+
+    if args.cmd == "org":
+        if args.org_cmd == "aggregate":
+            # Run the SARIF aggregator directly
+            tools_dir = Path(__file__).parent.parent.parent / "tools"
+            cmd = [
+                sys.executable,
+                str(tools_dir / "sarif_aggregate.py"),
+                "--in", args.input_dir,
+                "--out", args.output_dir,
+            ]
+            return subprocess.call(cmd)
 
     p.print_help()
     return 0

@@ -299,6 +299,132 @@ echo $?  # 0 = passed, 1 = policy violations found
 
 This enables CI pipelines to fail builds when security issues are detected.
 
+## 📊 Org Summary & Owners
+
+Aggregate SARIF findings across multiple repositories and map them to code owners for organization-wide security insights.
+
+### Basic Usage
+
+```bash
+# Aggregate SARIF files across repositories
+ss360 org aggregate --in .artifacts/org --out .artifacts
+
+# This processes files like:
+# .artifacts/org/repo1/findings.sarif
+# .artifacts/org/repo1/CODEOWNERS
+# .artifacts/org/repo2/findings.sarif  
+# .artifacts/org/repo2/CODEOWNERS
+```
+
+### CODEOWNERS Integration
+
+The aggregator automatically maps findings to code owners using each repository's CODEOWNERS file:
+
+```bash
+# Example CODEOWNERS file
+* @backend-team
+/src/ui/ @frontend-team
+/deployment/ @security-team @devops-team
+```
+
+**Key features:**
+- **Last rule wins**: More specific patterns override general ones
+- **Glob matching**: Full support for wildcards and directory patterns
+- **Multiple owners**: Files can be owned by multiple teams
+- **Fallback handling**: Files without owners are assigned to `@unowned`
+
+### Output Files
+
+#### org-summary.json
+Detailed counts and breakdowns for programmatic analysis:
+
+```json
+{
+  "total_findings": 42,
+  "by_owner": {
+    "@security-team": {
+      "total": 15,
+      "actual": 12,
+      "test": 2,
+      "expired": 1,
+      "github_pat": 8,
+      "aws_access_key": 7
+    }
+  },
+  "by_repo": {
+    "frontend-app": {
+      "total": 5,
+      "actual": 3,
+      "test": 2
+    }
+  },
+  "by_rule": {"github_pat": 20, "aws_access_key": 22},
+  "by_category": {"actual": 30, "test": 8, "expired": 4}
+}
+```
+
+#### org-summary.md
+Human-readable report with top owners and repositories:
+
+```markdown
+# Organization Security Summary
+
+**Total Findings:** 42
+**Repositories Scanned:** 8
+
+## Top Code Owners by Finding Count
+
+| Owner | Total | Actual | Test | Expired |
+|-------|-------|--------|------|---------|
+| @security-team | 15 | 12 | 2 | 1 |
+| @backend-team | 12 | 10 | 1 | 1 |
+```
+
+### Integration with CI/CD
+
+Typical organization workflow:
+
+```yaml
+# Per-repository scan (in each repo's CI)
+- name: SS360 Scan  
+  run: |
+    ss360 scan . --sarif-out findings.sarif
+    
+# Upload to centralized location
+- name: Upload findings
+  run: |
+    aws s3 cp findings.sarif s3://security-artifacts/org/$REPO_NAME/
+    aws s3 cp CODEOWNERS s3://security-artifacts/org/$REPO_NAME/
+
+# Organization-wide aggregation (separate job/repo)
+- name: Aggregate findings
+  run: |
+    aws s3 sync s3://security-artifacts/org .artifacts/org
+    ss360 org aggregate --in .artifacts/org --out .artifacts
+    
+# Generate reports and alerts
+- name: Security dashboard
+  run: |
+    python scripts/generate_dashboard.py .artifacts/org-summary.json
+```
+
+### Baseline Comparison
+
+When a baseline file `.artifacts/org-summary-baseline.json` exists, the Markdown report includes new vs baseline comparisons:
+
+```markdown
+## Changes Since Baseline
+
+- **New findings:** 5 (+12% from baseline)
+- **Resolved findings:** 2 (-5% from baseline)
+- **Net change:** +3 findings
+
+### Top Growing Repositories
+| Repository | New Findings | Previous |
+|------------|--------------|----------|
+| api-service | +3 | 8 → 11 |
+```
+
 ## 🧪 Testing
 
 Run the test suite:
