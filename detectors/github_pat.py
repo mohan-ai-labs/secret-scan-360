@@ -32,3 +32,21 @@ def scan(blob: bytes, path: str) -> List[Finding]:
             )
         )
     return out
+
+
+def detect(lines):
+    """Legacy interface for backwards compatibility with tests."""
+    from typing import Iterable, Dict, Iterator
+    
+    for i, line in enumerate(lines, start=1):
+        for m in GITHUB_PAT_RE.finditer(line):
+            token = m.group("token")
+            hint = f"{token[:6]}...{token[-4:]}"
+            yield {
+                "id": NAME,
+                "title": "GitHub Personal Access Token",
+                "severity": SEVERITY,
+                "description": "GitHub Personal Access Token detected",
+                "line": i,
+                "match": hint,
+            }
