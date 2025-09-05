@@ -1,4 +1,19 @@
 version: 1
 validators:
-  allow_network: false
-  global_qps: 2.0
+  allow_network: false  # Safe for CI - network validators will be skipped
+  global_qps: 2.0      # Rate limit for network calls when enabled
+
+budgets:
+  new_findings: 0      # Fail if any new findings (strict mode)
+  max_risk_score: 40   # Fail if any finding exceeds this risk score
+
+autofix:
+  min_risk_score: 60   # Only autofix findings with risk >= 60
+  require_confirmation: true  # Require --i-know-what-im-doing flag
+
+waivers: []  # List of temporary waivers
+# Example waiver:
+# - rule: "github_pat"           # Rule/detector ID
+#   path: "tests/**/*"           # Glob pattern for file paths
+#   expiry: "2024-12-31T23:59:59"  # ISO format expiry date
+#   reason: "Test fixtures contain fake tokens"
