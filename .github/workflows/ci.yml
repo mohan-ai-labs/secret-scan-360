@@ -24,12 +24,7 @@ jobs:
           # Run scan with network disabled (safe for CI)
           python -m ss360.cli scan . --policy policy.example.yml --format json --json-out findings.json --sarif-out findings.sarif
           echo "Scan completed with exit code: $?"
-      - name: Run SS360 scan
-        if: always()
-        run: |
-          python scripts/ci_scan.py --json-out findings.json --sarif-out findings.sarif --root .
-          working-directory: ${{ github.workspace }}
-          
+
       - name: Upload SARIF results to GitHub Security
         if: always()
         uses: github/codeql-action/upload-sarif@v3
@@ -45,16 +40,5 @@ jobs:
             findings.json
             findings.sarif
       - name: Tests required if code changed
-        run: python scripts/require_tests_changed.py
-      - name: Notify agents (always)
         if: always()
-        env:
-          WEBHOOK: ${{ secrets.AGENTS_WEBHOOK_URL }}
-          TOKEN:   ${{ secrets.AGENTS_WEBHOOK_TOKEN }}
-          JOB_STATUS: ${{ job.status }}
-          GITHUB_RUN_ID: ${{ github.run_id }}
-          GITHUB_JOB: ${{ github.job }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_REF_NAME: ${{ github.head_ref || github.ref_name }}
-          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
-        run: python scripts/notify_hub.py
+        run: python scripts/require_tests_changed.py
