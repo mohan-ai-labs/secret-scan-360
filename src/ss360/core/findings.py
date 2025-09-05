@@ -53,6 +53,6 @@ class Finding:
             result["reason"] = self.reason
             
         if self.meta:
-            result.update(self.meta)
+            result["meta"] = self.meta
             
         return result

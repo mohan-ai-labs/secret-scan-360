@@ -168,20 +168,46 @@ def scan_with_policy_and_classification(
 
 def _enhance_findings(findings: List[Dict[str, Any]]) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """Enhance findings with validation and classification."""
-    # For now, just return the findings as-is
-    # In a full implementation, this would run validators and classifiers
     enhanced = []
     validation_results = {}
     
     for i, finding in enumerate(findings):
-        enhanced_finding = finding.copy()
-        enhanced_finding.update({
-            "category": "unknown",
-            "confidence": 0.5,
-            "reasons": ["no_classification"]
-        })
-        enhanced.append(enhanced_finding)
-        validation_results[str(i)] = []
+        # Run classification on each finding
+        try:
+            from ss360.classify import classify
+            
+            # Create a copy of finding for classification with original tokens
+            classification_finding = finding.copy()
+            
+            # Use original token/URL from meta if available for better classification
+            meta = finding.get("meta", {})
+            if "full_token" in meta:
+                classification_finding["match"] = meta["full_token"]
+            elif "full_url" in meta:
+                classification_finding["match"] = meta["full_url"]
+            
+            context = {"validation_results": []}  # No network validation in this implementation
+            category, confidence, reasons = classify(classification_finding, context)
+            
+            enhanced_finding = finding.copy()
+            enhanced_finding.update({
+                "category": category,
+                "confidence": confidence,
+                "reasons": reasons
+            })
+            enhanced.append(enhanced_finding)
+            validation_results[str(i)] = []
+            
+        except Exception as e:
+            # If classification fails, add finding without classification
+            enhanced_finding = finding.copy()
+            enhanced_finding.update({
+                "category": "unknown",
+                "confidence": 0.1,
+                "reasons": [f"classification_error:{str(e)}"]
+            })
+            enhanced.append(enhanced_finding)
+            validation_results[str(i)] = []
     
     return enhanced, validation_results
 

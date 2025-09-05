@@ -38,7 +38,7 @@ def scan(blob: bytes, path: str) -> List[Finding]:
                     match_hint=hint,
                     severity=SEVERITY,
                     reason=f"Azure Storage SAS token detected{expiry_info}",
-                    meta={"sas_expiry": se_match.group(1) if se_match else None}
+                    meta={"sas_expiry": se_match.group(1) if se_match else None, "full_url": url}
                 )
             )
     return findings

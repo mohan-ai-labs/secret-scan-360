@@ -8,8 +8,14 @@ A comprehensive secret scanning solution that provides end-to-end detection, val
 # Install SS360
 pip install -e .
 
-# Basic scan
+# Basic scan with policy enforcement
 ss360 scan . --policy policy.example.yml
+
+# Raw mode - scan files directly without git filtering  
+ss360 scan /path/to/secrets.env --raw --policy policy.yml
+
+# Scan outside repository with custom policy
+ss360 scan /tmp/config --raw --policy /custom/policy.yml --format json
 
 # Generate autofix plan
 ss360 scan . --policy policy.demo.yml --autofix plan
@@ -17,6 +23,15 @@ ss360 scan . --policy policy.demo.yml --autofix plan
 # Output SARIF for CI
 ss360 scan . --format sarif --sarif-out results.sarif
 ```
+
+## 📋 CLI Options
+
+- `--raw`: Raw scan mode - scan files directly without git-based filtering (useful for scanning outside repositories)
+- `--policy PATH`: Path to policy file for enforcement (properly honored and logged)
+- `--format {text,json,sarif}`: Output format
+- `--json-out PATH`: Where to write JSON results (default: findings.json)  
+- `--sarif-out PATH`: Where to write SARIF results
+- `--only-category {actual,expired,test,unknown}`: Filter results by classification category
 
 ## 🔍 Features
 
@@ -29,9 +44,12 @@ ss360 scan . --format sarif --sarif-out results.sarif
 - **Multiple Formats**: Text, JSON, SARIF output for CI integration
 
 ### **Built-in Detectors**
-- **GitHub Personal Access Tokens**: `ghp_*`, `github_pat_*`, `ghs_*`, `gho_*`
-- **AWS Access Keys**: `AKIA*` access key IDs and secret access keys
-- [Slack Webhook Detector](detectors/slack_webhook.py) — detects Slack incoming webhook URLs
+- **GitHub Personal Access Tokens**: Classic `ghp_*` and fine-grained `github_pat_*` tokens
+- **AWS Access Keys**: `AKIA*` access key IDs, secret access keys, and session tokens
+- **Azure Storage SAS**: Blob and container SAS URLs with expiry detection
+- **Slack Webhooks**: Incoming webhook URLs with proper redaction
+- **JWT Tokens**: JSON Web Tokens with expiry parsing and classification
+- **GCP Service Accounts**: JSON service account key files
 
 ### **Risk Scoring System**
 Deterministic 0-100 risk scoring based on:

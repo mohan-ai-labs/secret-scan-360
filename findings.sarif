@@ -12,35 +12,13 @@
           "informationUri": "https://github.com/mohan-ai-labs/secret-scan-360",
           "rules": [
             {
-              "id": "AWS Access Key",
-              "name": "AWS Access Key",
+              "id": "Unknown",
+              "name": "Unknown",
               "shortDescription": {
-                "text": "SS360 rule: AWS Access Key"
+                "text": "SS360 rule: Unknown"
               },
               "fullDescription": {
-                "text": "Findings of kind AWS Access Key"
-              },
-              "helpUri": "https://github.com/mohan-ai-labs/secret-scan-360"
-            },
-            {
-              "id": "GitHub Token",
-              "name": "GitHub Token",
-              "shortDescription": {
-                "text": "SS360 rule: GitHub Token"
-              },
-              "fullDescription": {
-                "text": "Findings of kind GitHub Token"
-              },
-              "helpUri": "https://github.com/mohan-ai-labs/secret-scan-360"
-            },
-            {
-              "id": "Slack Webhook",
-              "name": "Slack Webhook",
-              "shortDescription": {
-                "text": "SS360 rule: Slack Webhook"
-              },
-              "fullDescription": {
-                "text": "Findings of kind Slack Webhook"
+                "text": "Findings of kind Unknown"
               },
               "helpUri": "https://github.com/mohan-ai-labs/secret-scan-360"
             }
@@ -49,38 +27,11 @@
       },
       "results": [
         {
-          "ruleId": "AWS Access Key",
+          "ruleId": "Unknown",
           "ruleIndex": 0,
           "level": "error",
           "message": {
-            "text": "Matched rule: AWS Access Key"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "."
-                },
-                "region": {
-                  "startLine": 8
-                }
-              }
-            }
-          ],
-          "properties": {
-            "category": "unknown",
-            "confidence": 0.5,
-            "reasons": [
-              "no_classification"
-            ]
-          }
-        },
-        {
-          "ruleId": "GitHub Token",
-          "ruleIndex": 1,
-          "level": "error",
-          "message": {
-            "text": "Matched rule: GitHub Token (classic-ish)"
+            "text": "AWS Secret Access Key"
           },
           "locations": [
             {
@@ -95,19 +46,19 @@
             }
           ],
           "properties": {
-            "category": "unknown",
-            "confidence": 0.5,
+            "category": "test",
+            "confidence": 0.7,
             "reasons": [
-              "no_classification"
+              "marker:XXX"
             ]
           }
         },
         {
-          "ruleId": "Slack Webhook",
-          "ruleIndex": 2,
+          "ruleId": "Unknown",
+          "ruleIndex": 0,
           "level": "error",
           "message": {
-            "text": "Matched rule: Slack Webhook"
+            "text": "AWS Secret Access Key"
           },
           "locations": [
             {
@@ -116,16 +67,97 @@
                   "uri": "."
                 },
                 "region": {
-                  "startLine": 12
+                  "startLine": 10
                 }
               }
             }
           ],
           "properties": {
-            "category": "unknown",
-            "confidence": 0.5,
+            "category": "test",
+            "confidence": 0.7,
             "reasons": [
-              "no_classification"
+              "marker:XXX"
+            ]
+          }
+        },
+        {
+          "ruleId": "Unknown",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Azure Storage SAS token detected (expires: 2023-01-01T00:00:00Z)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "."
+                },
+                "region": {
+                  "startLine": 4
+                }
+              }
+            }
+          ],
+          "properties": {
+            "category": "expired",
+            "confidence": 0.95,
+            "reasons": [
+              "offline:azure_sas_expired"
+            ]
+          }
+        },
+        {
+          "ruleId": "Unknown",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Azure Storage SAS token detected (expires: 2030-12-31T23:59:59Z)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "."
+                },
+                "region": {
+                  "startLine": 10
+                }
+              }
+            }
+          ],
+          "properties": {
+            "category": "test",
+            "confidence": 0.7,
+            "reasons": [
+              "marker:XXX"
+            ]
+          }
+        },
+        {
+          "ruleId": "Unknown",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "JSON Web Token detected (expires: 2000-01-01T00:00:00)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "."
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ],
+          "properties": {
+            "category": "expired",
+            "confidence": 0.95,
+            "reasons": [
+              "offline:jwt_expired"
             ]
           }
         }

@@ -30,6 +30,7 @@ def scan(blob: bytes, path: str) -> List[Finding]:
                     match_hint=hint,
                     severity=SEVERITY,
                     reason="Slack incoming webhook URL detected",
+                    meta={"full_url": url}  # Store original for classification
                 )
             )
     return findings

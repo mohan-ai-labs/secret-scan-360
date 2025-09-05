@@ -56,6 +56,7 @@ def scan(blob: bytes, path: str) -> List[Finding]:
                     match_hint=hint,
                     severity=SEVERITY,
                     reason=f"JSON Web Token detected{expiry_info}",
+                    meta={"full_token": token}  # Store original for classification
                 )
             )
     return findings

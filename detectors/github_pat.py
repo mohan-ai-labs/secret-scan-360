@@ -29,6 +29,7 @@ def scan(blob: bytes, path: str) -> List[Finding]:
                 line=line,
                 match_hint=hint,
                 severity=SEVERITY,
+                meta={"full_token": token}  # Store original for classification
             )
         )
     return out
