@@ -21,7 +21,7 @@ jobs:
       - name: Run SS360 scan (PR)
         if: always()
         run: |
-          # Run scan with network disabled (safe for CI)
+          # Run scan with network disabled (safe for CI), using baseline if present
           python -m ss360.cli scan src --policy policy.example.yml --format json --json-out findings.json --sarif-out findings.sarif
           echo "Scan completed with exit code: $?"
 
