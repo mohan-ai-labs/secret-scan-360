@@ -13,3 +13,4 @@ https://github.com/angular/angular
 https://github.com/expressjs/express
 https://github.com/docker/docker
 https://github.com/elastic/elasticsearch
+https://github.com/apache/kafka
