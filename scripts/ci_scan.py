@@ -29,6 +29,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from ss360.scanner import Scanner  # noqa: E402
+from ss360.sarif.export import build_sarif  # noqa: E402
 
 
 # Use recursive globs so top-level dirs are excluded too
@@ -154,79 +155,6 @@ def drop_ci_noise(findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return out
 
 
-def _to_sarif(report: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Build a minimal SARIF v2.1.0 document from the report.
-    """
-    findings = report.get("findings", []) or []
-    root = str(report.get("root", ""))
-
-    # Collect rules by 'kind'
-    rule_ids = {}
-    rules = []
-    for f in findings:
-        k = f.get("kind", "Unknown")
-        if k not in rule_ids:
-            rule_ids[k] = len(rules)
-            rules.append(
-                {
-                    "id": k,
-                    "name": k,
-                    "shortDescription": {"text": f"SS360 rule: {k}"},
-                    "fullDescription": {"text": f"Findings of kind {k}"},
-                    "helpUri": "https://github.com/mohan-ai-labs/secret-scan-360",
-                }
-            )
-
-    results = []
-    for f in findings:
-        k = f.get("kind", "Unknown")
-        ridx = rule_ids.get(k, 0)
-        path = str(f.get("path", ""))
-        line = int(f.get("line") or 1)
-        reason = f.get("reason") or k
-        # Normalize path to be repo-relative if possible
-        try:
-            p_rel = str(Path(path).resolve().relative_to(Path(root).resolve()))
-        except Exception:
-            p_rel = path
-        level = "error" if bool(f.get("is_secret", True)) else "warning"
-        results.append(
-            {
-                "ruleId": k,
-                "ruleIndex": ridx,
-                "level": level,
-                "message": {"text": reason},
-                "locations": [
-                    {
-                        "physicalLocation": {
-                            "artifactLocation": {"uri": p_rel},
-                            "region": {"startLine": max(1, line)},
-                        }
-                    }
-                ],
-            }
-        )
-
-    sarif = {
-        "version": "2.1.0",
-        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-        "runs": [
-            {
-                "tool": {
-                    "driver": {
-                        "name": "SS360",
-                        "informationUri": "https://github.com/mohan-ai-labs/secret-scan-360",
-                        "rules": rules,
-                    }
-                },
-                "results": results,
-            }
-        ],
-    }
-    return sarif
-
-
 def main() -> int:
     args = parse_args()
 
@@ -267,7 +195,7 @@ def main() -> int:
 
     # New: write SARIF (before gating) if requested
     if args.sarif_out:
-        sarif = _to_sarif(report)
+        sarif = build_sarif(report)
         sarif_path = Path(args.sarif_out)
         sarif_path.parent.mkdir(parents=True, exist_ok=True)
         sarif_path.write_text(json.dumps(sarif, indent=2))
