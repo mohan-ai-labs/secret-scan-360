@@ -1,18 +1,25 @@
 # SPDX-License-Identifier: MIT
 """
-Policy loader and configuration management.
+Policy configuration loading.
 """
 from __future__ import annotations
 
-import yaml
-from pathlib import Path
-from typing import Dict, Any, List
+import os
 from datetime import datetime
+from typing import Dict, Any, List
+import fnmatch
+
+try:
+    import yaml
+    YAML_AVAILABLE = True
+except ImportError:
+    yaml = None
+    YAML_AVAILABLE = False
 
 
-def load_policy_config(config_path: str) -> Dict[str, Any]:
+def load_policy_config(config_path: str = None) -> Dict[str, Any]:
     """
-    Load policy configuration from YAML file.
+    Load policy configuration from file or use default.
     
     Args:
         config_path: Path to the policy YAML file
@@ -21,30 +28,34 @@ def load_policy_config(config_path: str) -> Dict[str, Any]:
         Dictionary containing the policy configuration
         
     Raises:
-        FileNotFoundError: If config file doesn't exist
-        yaml.YAMLError: If config file is invalid YAML
+        ImportError: If yaml module is not available
     """
-    path = Path(config_path)
-    if not path.exists():
-        raise FileNotFoundError(f"Policy config file not found: {config_path}")
+    if not config_path:
+        return get_default_policy_config()
     
-    with open(path, "r", encoding="utf-8") as f:
-        config = yaml.safe_load(f)
+    if not YAML_AVAILABLE:
+        raise ImportError("yaml module required for loading config files")
     
-    if config is None:
-        config = {}
+    if os.path.exists(config_path):
+        with open(config_path, 'r', encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+        
+        if config is None:
+            config = {}
+        
+        # Validate config structure
+        if not isinstance(config, dict):
+            raise ValueError("Policy config must be a dictionary")
+        
+        # Apply defaults
+        config = _apply_policy_defaults(config)
+        
+        # Validate structure
+        _validate_policy_config(config)
+        
+        return config
     
-    # Validate config structure
-    if not isinstance(config, dict):
-        raise ValueError("Policy config must be a dictionary")
-    
-    # Apply defaults
-    config = _apply_policy_defaults(config)
-    
-    # Validate structure
-    _validate_policy_config(config)
-    
-    return config
+    return get_default_policy_config()
 
 
 def _apply_policy_defaults(config: Dict[str, Any]) -> Dict[str, Any]:
@@ -177,7 +188,6 @@ def is_waiver_active(waiver: Dict[str, Any], finding_path: str, rule_id: str) ->
         return False
     
     # Check if waiver applies to this path (glob matching)
-    import fnmatch
     waiver_path = waiver.get("path", "")
     if not fnmatch.fnmatch(finding_path, waiver_path):
         return False

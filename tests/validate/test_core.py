@@ -5,6 +5,9 @@ Tests for the validator core functionality.
 from unittest.mock import patch
 
 import pytest
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from ss360.validate.core import (
     ValidationState,

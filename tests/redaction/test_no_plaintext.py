@@ -3,6 +3,10 @@
 Tests to ensure no plaintext secrets appear in evidence or logs.
 """
 
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+
 from ss360.validate.core import (
     SlackWebhookValidator,
     run_validators,

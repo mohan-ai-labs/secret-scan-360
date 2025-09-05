@@ -2,6 +2,10 @@
 """
 Tests for risk scoring system.
 """
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
 from ss360.risk.score import (
     calculate_risk_score,
     get_risk_level,
@@ -100,7 +104,10 @@ class TestRiskScoring:
 
 def test_github_pat_detector():
     """Test GitHub PAT detector patterns."""
-    from detectors.github_pat import detect
+    try:
+        from src.services.agents.app.detectors.github_pat import detect
+    except ImportError:
+        from services.agents.app.detectors.github_pat import detect
 
     # Test classic PAT
     lines = ["API_TOKEN = ghp_1234567890123456789012345678901234567890"]
@@ -122,7 +129,10 @@ def test_github_pat_detector():
 
 def test_aws_key_detector():
     """Test AWS Access Key detector patterns."""
-    from detectors.aws_keypair import detect
+    try:
+        from src.services.agents.app.detectors.aws_keypair import detect
+    except ImportError:
+        from services.agents.app.detectors.aws_keypair import detect
 
     # Test Access Key ID
     lines = ["AWS_ACCESS_KEY_ID = AKIAIOSFODNN7EXAMPLE"]

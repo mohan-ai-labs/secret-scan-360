@@ -2,6 +2,10 @@
 """
 Tests for autofix framework.
 """
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
 from ss360.autofix.planner import AutofixPlanner, ActionType, PlanItem
 from ss360.autofix.apply import AutofixApplier
 
