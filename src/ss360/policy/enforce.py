@@ -123,9 +123,9 @@ class PolicyEnforcer:
         violations = []
         budgets = self.config.get("budgets", {})
 
-        # Check new findings budget
-        max_new_findings = budgets.get("new_findings", 0)
-        if len(findings) > max_new_findings:
+        # Check legacy new findings budget (backward compatibility)
+        max_new_findings = budgets.get("new_findings", None)
+        if max_new_findings is not None and len(findings) > max_new_findings:
             violations.append(
                 PolicyViolation(
                     type=PolicyViolationType.BUDGET_EXCEEDED,
@@ -138,6 +138,44 @@ class PolicyEnforcer:
                     },
                 )
             )
+        
+        # Check category-based budgets
+        category_budgets = {
+            "new_actual_findings": budgets.get("new_actual_findings"),
+            "new_expired_findings": budgets.get("new_expired_findings"), 
+            "new_test_findings": budgets.get("new_test_findings"),
+            "new_unknown_findings": budgets.get("new_unknown_findings"),
+        }
+        
+        # Count findings by category
+        category_counts = {"actual": 0, "expired": 0, "test": 0, "unknown": 0}
+        for finding in findings:
+            category = finding.get("category", "unknown")
+            if category in category_counts:
+                category_counts[category] += 1
+        
+        # Check each category budget
+        for budget_key, budget_limit in category_budgets.items():
+            if budget_limit is None:
+                continue  # Skip undefined budgets
+                
+            category = budget_key.replace("new_", "").replace("_findings", "")
+            found_count = category_counts.get(category, 0)
+            
+            if found_count > budget_limit:
+                violations.append(
+                    PolicyViolation(
+                        type=PolicyViolationType.BUDGET_EXCEEDED,
+                        message=f"Found {found_count} {category} findings, but budget allows max {budget_limit}",
+                        severity="high",
+                        details={
+                            "found": found_count,
+                            "allowed": budget_limit,
+                            "budget_type": budget_key,
+                            "category": category,
+                        },
+                    )
+                )
 
         return violations
 

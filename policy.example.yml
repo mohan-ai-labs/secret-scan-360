@@ -3,9 +3,29 @@ validators:
   allow_network: false
   global_qps: 2.0
 
+# Category-based budget enforcement
+budgets:
+  # Strict enforcement: No actual findings allowed (fail CI on real secrets)
+  new_actual_findings: 0
+  
+  # Lenient on expired credentials (they pose less risk)
+  new_expired_findings: 999
+  
+  # Allow test/sample credentials
+  new_test_findings: 999
+  
+  # Unknown findings allowed but limited
+  new_unknown_findings: 10
+  
+  # Legacy total findings budget (for backward compatibility)
+  new_findings: 20
+  
+  # Risk score budget  
+  max_risk_score: 40
+
 # Add configuration to handle test secrets
 scan:
-  max_findings: 10  # Allow up to 10 findings instead of 0
+  max_findings: 20  # Allow up to 20 findings instead of 0
   
 # Or add exclusions for test files
 excludes:

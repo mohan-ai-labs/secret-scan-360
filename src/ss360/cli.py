@@ -53,6 +53,11 @@ def main(argv=None):
         dest="sarif_out",
         help="where to write SARIF (default in CI: findings.sarif)",
     )
+    sp.add_argument(
+        "--only-category",
+        choices=["actual", "expired", "test", "unknown"],
+        help="only include findings of this category in results",
+    )
 
     args = p.parse_args(argv)
     if args.version or args.cmd == "version":
@@ -74,6 +79,8 @@ def main(argv=None):
         ]
         if sarif_out:
             cmd += ["--sarif-out", sarif_out]
+        if args.only_category:
+            cmd += ["--only-category", args.only_category]
         return subprocess.call(cmd)
 
     p.print_help()
