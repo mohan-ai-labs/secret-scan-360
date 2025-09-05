@@ -10,7 +10,8 @@ Examples:
     --min-match-len 8 \
     --max-findings 0 \
     --root . \
-    --out findings.json
+    --out findings.json \
+    --sarif-out findings.sarif
 """
 
 from __future__ import annotations
@@ -109,6 +110,12 @@ def parse_args() -> argparse.Namespace:
         dest="out",
         help="Alias for --json-out",
     )
+    # New: write SARIF to a path for GitHub Code Scanning upload
+    p.add_argument(
+        "--sarif-out",
+        dest="sarif_out",
+        help="Write SARIF report to this path",
+    )
     return p.parse_args()
 
 
@@ -145,6 +152,79 @@ def drop_ci_noise(findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             continue
         out.append(f)
     return out
+
+
+def _to_sarif(report: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Build a minimal SARIF v2.1.0 document from the report.
+    """
+    findings = report.get("findings", []) or []
+    root = str(report.get("root", ""))
+
+    # Collect rules by 'kind'
+    rule_ids = {}
+    rules = []
+    for f in findings:
+        k = f.get("kind", "Unknown")
+        if k not in rule_ids:
+            rule_ids[k] = len(rules)
+            rules.append(
+                {
+                    "id": k,
+                    "name": k,
+                    "shortDescription": {"text": f"SS360 rule: {k}"},
+                    "fullDescription": {"text": f"Findings of kind {k}"},
+                    "helpUri": "https://github.com/mohan-ai-labs/secret-scan-360",
+                }
+            )
+
+    results = []
+    for f in findings:
+        k = f.get("kind", "Unknown")
+        ridx = rule_ids.get(k, 0)
+        path = str(f.get("path", ""))
+        line = int(f.get("line") or 1)
+        reason = f.get("reason") or k
+        # Normalize path to be repo-relative if possible
+        try:
+            p_rel = str(Path(path).resolve().relative_to(Path(root).resolve()))
+        except Exception:
+            p_rel = path
+        level = "error" if bool(f.get("is_secret", True)) else "warning"
+        results.append(
+            {
+                "ruleId": k,
+                "ruleIndex": ridx,
+                "level": level,
+                "message": {"text": reason},
+                "locations": [
+                    {
+                        "physicalLocation": {
+                            "artifactLocation": {"uri": p_rel},
+                            "region": {"startLine": max(1, line)},
+                        }
+                    }
+                ],
+            }
+        )
+
+    sarif = {
+        "version": "2.1.0",
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": "SS360",
+                        "informationUri": "https://github.com/mohan-ai-labs/secret-scan-360",
+                        "rules": rules,
+                    }
+                },
+                "results": results,
+            }
+        ],
+    }
+    return sarif
 
 
 def main() -> int:
@@ -184,6 +264,14 @@ def main() -> int:
         Path(json_out).parent.mkdir(parents=True, exist_ok=True)
         Path(json_out).write_text(json.dumps(report, indent=2))
         print(f"[ci-scan] Wrote report: {json_out}")
+
+    # New: write SARIF (before gating) if requested
+    if args.sarif_out:
+        sarif = _to_sarif(report)
+        sarif_path = Path(args.sarif_out)
+        sarif_path.parent.mkdir(parents=True, exist_ok=True)
+        sarif_path.write_text(json.dumps(sarif, indent=2))
+        print(f"[ci-scan] Wrote SARIF: {sarif_path}")
 
     print(f"[ci-scan] total findings: {report['total']}")
     if args.max_findings is not None and report["total"] > int(args.max_findings):
