@@ -8,6 +8,7 @@ src/secret_scan_360.egg-info/entry_points.txt
 src/secret_scan_360.egg-info/requires.txt
 src/secret_scan_360.egg-info/top_level.txt
 src/ss360/__init__.py
+src/ss360/__main__.py
 src/ss360/cli.py
 src/ss360/scanner.py
 src/ss360/autofix/__init__.py
