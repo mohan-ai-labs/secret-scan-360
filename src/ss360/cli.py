@@ -2,15 +2,19 @@
 """
 Secret Scan 360 - Command Line Interface
 
-This CLI provides:
-- ss360 version
+Safe defaults:
 - ss360 scan <root> --json-out findings.json
+- In GitHub Actions, also writes findings.sarif automatically.
 
-Note:
-- All example strings have been sanitized to avoid triggering detectors.
+Compatibility flags accepted (no-ops today):
+- --policy PATH
+- --format {text,json,sarif}
 """
 
+from __future__ import annotations
+
 import argparse
+import os
 import sys
 import subprocess
 from . import __version__
@@ -32,6 +36,23 @@ def main(argv=None):
         default="findings.json",
         help="where to write JSON results (default: findings.json)",
     )
+    # Accept but ignore (compat)
+    sp.add_argument(
+        "--format",
+        choices=["text", "json", "sarif"],
+        default="json",
+        help="output format hint (compat; no-op)",
+    )
+    sp.add_argument(
+        "--policy",
+        dest="policy",
+        help="policy file path (compat; no-op)",
+    )
+    sp.add_argument(
+        "--sarif-out",
+        dest="sarif_out",
+        help="where to write SARIF (default in CI: findings.sarif)",
+    )
 
     args = p.parse_args(argv)
     if args.version or args.cmd == "version":
@@ -39,6 +60,10 @@ def main(argv=None):
         return 0
 
     if args.cmd == "scan":
+        sarif_out = args.sarif_out
+        if not sarif_out and os.getenv("GITHUB_ACTIONS") == "true":
+            sarif_out = "findings.sarif"
+
         cmd = [
             sys.executable,
             "scripts/ci_scan.py",
@@ -47,6 +72,8 @@ def main(argv=None):
             "--root",
             args.root,
         ]
+        if sarif_out:
+            cmd += ["--sarif-out", sarif_out]
         return subprocess.call(cmd)
 
     p.print_help()

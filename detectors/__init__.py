@@ -1,1 +1,1 @@
-# make detectors a package
+# namespace package for ss360.autofix

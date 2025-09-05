@@ -6,6 +6,7 @@ Humans can import the scanner layer like:
 Internally this still re-exports from the legacy services.* modules.
 In Phase 2 the implementation will move under src/ss360/.
 """
+
 from services.agents.app.core.scanner import Scanner
 from services.agents.app.detectors.registry import DetectorRegistry
 

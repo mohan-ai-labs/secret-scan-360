@@ -161,9 +161,7 @@ def _redact_evidence(evidence: str) -> str:
         # with underscores)
         redacted_line = re.sub(
             r"\b[A-Za-z0-9+/_-]{16,}\b",  # Match secrets 16+ chars
-            lambda m: (
-                "****" + m.group(0)[-4:] if len(m.group(0)) > 4 else "****"
-            ),
+            lambda m: ("****" + m.group(0)[-4:] if len(m.group(0)) > 4 else "****"),
             line,
         )
         redacted_lines.append(redacted_line)

@@ -10,7 +10,8 @@ Examples:
     --min-match-len 8 \
     --max-findings 0 \
     --root . \
-    --out findings.json
+    --out findings.json \
+    --sarif-out findings.sarif
 """
 
 from __future__ import annotations
@@ -28,6 +29,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from ss360.scanner import Scanner  # noqa: E402
+from ss360.sarif.export import build_sarif  # noqa: E402
 
 
 # Use recursive globs so top-level dirs are excluded too
@@ -53,6 +55,13 @@ DEFAULT_EXCLUDES = [
     "**/services/agents/app/config/detectors.yaml",
     "src/secret_scan_360.egg-info/**",
     "**/*.egg-info/**",
+    # Demo/test samples at repo root (exclude to keep CI gate signal-only)
+    "test_secrets.py",
+    "**/test_secrets.py",
+    "test_demo.sh",
+    "**/test_demo.sh",
+    "demo_e2e.sh",
+    "**/demo_e2e.sh",
 ]
 
 
@@ -108,6 +117,12 @@ def parse_args() -> argparse.Namespace:
         "--out",
         dest="out",
         help="Alias for --json-out",
+    )
+    # New: write SARIF to a path for GitHub Code Scanning upload
+    p.add_argument(
+        "--sarif-out",
+        dest="sarif_out",
+        help="Write SARIF report to this path",
     )
     return p.parse_args()
 
@@ -184,6 +199,14 @@ def main() -> int:
         Path(json_out).parent.mkdir(parents=True, exist_ok=True)
         Path(json_out).write_text(json.dumps(report, indent=2))
         print(f"[ci-scan] Wrote report: {json_out}")
+
+    # Write SARIF (before gating) if requested
+    if args.sarif_out:
+        sarif = build_sarif(report)
+        sarif_path = Path(args.sarif_out)
+        sarif_path.parent.mkdir(parents=True, exist_ok=True)
+        sarif_path.write_text(json.dumps(sarif, indent=2))
+        print(f"[ci-scan] Wrote SARIF: {sarif_path}")
 
     print(f"[ci-scan] total findings: {report['total']}")
     if args.max_findings is not None and report["total"] > int(args.max_findings):

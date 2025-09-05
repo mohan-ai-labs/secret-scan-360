@@ -5,6 +5,10 @@ Tests for the validator core functionality.
 from unittest.mock import patch
 
 import pytest
+import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from ss360.validate.core import (
     ValidationState,
@@ -13,7 +17,7 @@ from ss360.validate.core import (
     ValidatorRegistry,
     SlackWebhookValidator,
     run_validators,
-    _get_default_registry
+    _get_default_registry,
 )
 
 
@@ -31,7 +35,7 @@ class TestTokenBucket:
         # Should fail when capacity exceeded
         assert bucket.acquire(1) is False
 
-    @patch('time.time')
+    @patch("time.time")
     def test_token_bucket_refill(self, mock_time):
         """Test token bucket refill over time."""
         mock_time.return_value = 0.0
@@ -70,9 +74,7 @@ class TestSlackWebhookValidator:
     def test_invalid_slack_webhook(self):
         """Test validation of invalid Slack webhook."""
         validator = SlackWebhookValidator()
-        finding = {
-            "match": "https://invalid.webhook.url"
-        }
+        finding = {"match": "https://invalid.webhook.url"}
 
         result = validator.validate(finding)
 
@@ -129,6 +131,7 @@ class TestRunValidators:
 
     def test_network_kill_switch(self):
         """Test that network validators are skipped when network is disabled."""
+
         # Create a mock network validator
         class NetworkValidator:
             @property
@@ -145,19 +148,13 @@ class TestRunValidators:
 
             def validate(self, finding):
                 return ValidationResult(
-                    state=ValidationState.VALID,
-                    validator_name=self.name
+                    state=ValidationState.VALID, validator_name=self.name
                 )
 
         registry = ValidatorRegistry()
         registry.register(NetworkValidator())
 
-        config = {
-            "validators": {
-                "allow_network": False,
-                "global_qps": 10.0
-            }
-        }
+        config = {"validators": {"allow_network": False, "global_qps": 10.0}}
 
         finding = {"match": "test"}
         results = run_validators(finding, config, registry)
@@ -171,11 +168,13 @@ class TestRunValidators:
         config = {
             "validators": {
                 "allow_network": False,
-                "global_qps": 10.0  # High enough for first call
+                "global_qps": 10.0,  # High enough for first call
             }
         }
 
-        finding = {"match": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"}
+        finding = {
+            "match": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+        }
 
         # First call should work
         results1 = run_validators(finding, config)
@@ -193,7 +192,9 @@ class TestRunValidators:
 
     def test_default_config(self):
         """Test with default configuration."""
-        finding = {"match": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"}
+        finding = {
+            "match": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+        }
         config = {"validators": {"allow_network": False, "global_qps": 10.0}}
 
         results = run_validators(finding, config)
@@ -204,6 +205,7 @@ class TestRunValidators:
 
     def test_validator_exception_handling(self):
         """Test that validator exceptions are handled gracefully."""
+
         class FailingValidator:
             @property
             def name(self):

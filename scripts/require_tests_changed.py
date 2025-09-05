@@ -21,8 +21,9 @@ CODE_PREFIXES: tuple[str, ...] = (
 
 
 def sh(args: list[str], check: bool = True) -> str:
-    return subprocess.run(args, text=True, check=check,
-                          capture_output=True).stdout.strip()
+    return subprocess.run(
+        args, text=True, check=check, capture_output=True
+    ).stdout.strip()
 
 
 def rev(ref: str) -> str:
@@ -37,8 +38,7 @@ def main() -> int:
     head_ref = os.getenv("GITHUB_SHA") or "HEAD"
 
     # Make sure we have the base branch in this shallow clone
-    subprocess.run(["git", "fetch", "--depth=50", "origin", base_branch],
-                   check=False)
+    subprocess.run(["git", "fetch", "--depth=50", "origin", base_branch], check=False)
 
     # Resolve a concrete base SHA with sane fallbacks
     base = (
@@ -48,8 +48,11 @@ def main() -> int:
         or rev("main")
     )
     if not base:
-        print(f"[guard] Could not resolve base for '{base_branch}', "
-              "skipping tests-required check.", file=sys.stderr)
+        print(
+            f"[guard] Could not resolve base for '{base_branch}', "
+            "skipping tests-required check.",
+            file=sys.stderr,
+        )
         return 0
 
     changed = sh(["git", "diff", "--name-only", f"{base}...{head_ref}"]).splitlines()
@@ -58,8 +61,9 @@ def main() -> int:
         return 0
 
     changed_tests = any(f.startswith(TEST_DIRS) for f in changed)
+
     def is_code(f: str) -> bool:
-        return any(f.startswith(p.rstrip('/')) or f == p for p in CODE_PREFIXES)
+        return any(f.startswith(p.rstrip("/")) or f == p for p in CODE_PREFIXES)
 
     changed_code = any(is_code(f) for f in changed)
 

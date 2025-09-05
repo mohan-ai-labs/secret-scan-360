@@ -1,0 +1,1 @@
+# namespace package for ss360.sarif
