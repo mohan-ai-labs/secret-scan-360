@@ -11,13 +11,13 @@ from typing import Iterable, Dict, Iterator
 # GitHub PAT patterns - covers classic, fine-grained, and app tokens
 PATTERNS = [
     # Classic PATs: ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (40 chars after ghp_)
-    re.compile(r"\bghp_[A-Za-z0-9]{36}\b"),
+    re.compile(r"\bghp_[A-Za-z0-9]{40}\b"),
     # Fine-grained PATs: github_pat_xxxxxxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     re.compile(r"\bgithub_pat_[A-Za-z0-9]{22}_[A-Za-z0-9]{59}\b"),
     # GitHub App tokens: ghs_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (40 chars after ghs_)
-    re.compile(r"\bghs_[A-Za-z0-9]{36}\b"),
+    re.compile(r"\bghs_[A-Za-z0-9]{40}\b"),
     # OAuth tokens: gho_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (40 chars after gho_)
-    re.compile(r"\bgho_[A-Za-z0-9]{36}\b"),
+    re.compile(r"\bgho_[A-Za-z0-9]{40}\b"),
 ]
 
 

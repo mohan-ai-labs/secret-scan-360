@@ -1,0 +1,14 @@
+version: 1
+validators:
+  allow_network: false  # Safe for CI - network validators will be skipped
+  global_qps: 2.0      # Rate limit for network calls when enabled
+
+budgets:
+  new_findings: 5      # Allow some findings for demo
+  max_risk_score: 80   # Higher threshold for demo
+
+autofix:
+  min_autofix_risk_score: 30   # Lower threshold to see autofix in action
+  require_confirmation: true  # Require --i-know-what-im-doing flag
+
+waivers: []  # List of temporary waivers

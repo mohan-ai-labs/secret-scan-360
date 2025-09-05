@@ -74,7 +74,8 @@ def main(argv=None):
 
 def handle_scan_command(args):
     """Handle the scan subcommand."""
-    from .scanner import Scanner
+    from services.agents.app.core.scanner import Scanner
+    from services.agents.app.detectors.registry import DetectorRegistry
     from .policy.loader import load_policy_config, get_default_policy_config
     from .policy.enforce import enforce_policy
     from .validate.core import run_validators, ValidatorRegistry
@@ -95,27 +96,73 @@ def handle_scan_command(args):
         if args.format == "text":
             print("Using default policy (no --policy specified)")
     
+    # Initialize detector registry with our detectors
+    detector_registry = DetectorRegistry()
+    
+    # Import and register our detectors
+    import detectors.github_pat as github_pat_detector
+    import detectors.aws_keypair as aws_keypair_detector
+    
+    # Create simple detector wrapper
+    class SimpleDetector:
+        def __init__(self, name, detector_id, detect_func):
+            self.name = name
+            self.detector_id = detector_id
+            self.detect_func = detect_func
+        
+        def detect(self, path: str, text: str):
+            lines = text.splitlines()
+            for finding in self.detect_func(lines):
+                finding["path"] = path
+                finding["kind"] = self.detector_id  # Use detector_id as kind
+                yield finding
+    
+    # Register our detectors
+    github_detector = SimpleDetector("github_pat", "github_pat", github_pat_detector.detect)
+    aws_detector = SimpleDetector("aws_keypair", "aws_keypair", aws_keypair_detector.detect)
+    
+    detector_registry.register(github_detector)
+    detector_registry.register(aws_detector)
+    
     # Initialize scanner
-    scanner = Scanner()
+    scanner = Scanner(registry=detector_registry)
     
     # Perform scan
     try:
-        scan_results = scanner.scan_directory(args.root)
+        findings = scanner.scan_paths([args.root])
     except Exception as e:
         print(f"Error during scan: {e}", file=sys.stderr)
         return 1
     
-    findings = scan_results.get("findings", [])
+    # Convert findings to our expected format
+    normalized_findings = []
+    for finding in findings:
+        normalized_finding = {
+            "id": finding.get("kind", "unknown"),
+            "title": finding.get("kind", "Unknown"),
+            "path": finding.get("path", ""),
+            "line": finding.get("line", 0),
+            "match": finding.get("match", ""),
+            "severity": "high",  # Default severity
+            "description": f"{finding.get('kind', 'Unknown')} detected",
+        }
+        normalized_findings.append(normalized_finding)
+    
+    # Build scan results
+    scan_results = {
+        "total": len(normalized_findings),
+        "findings": normalized_findings
+    }
     
     # Set up validator registry
-    registry = ValidatorRegistry()
-    registry.register(GitHubPATLiveValidator())
-    registry.register(AWSAccessKeyLiveValidator())
+    validator_registry = ValidatorRegistry()
+    validator_registry.register(GitHubPATLiveValidator())
+    validator_registry.register(AWSAccessKeyLiveValidator())
     
     # Run validation for each finding
     validation_results = {}
-    for i, finding in enumerate(findings):
-        results = run_validators(finding, policy_config, registry)
+    for i, finding in enumerate(normalized_findings):
+        results = run_validators(finding, policy_config, validator_registry)
         validation_results[str(i)] = [
             {
                 "state": r.state.value,
@@ -138,7 +185,7 @@ def handle_scan_command(args):
     }
     
     # Enforce policy
-    policy_result = enforce_policy(policy_config, findings, validation_results)
+    policy_result = enforce_policy(policy_config, normalized_findings, validation_results)
     scan_results["policy"] = {
         "passed": policy_result.passed,
         "violations": [
@@ -157,7 +204,9 @@ def handle_scan_command(args):
     # Handle autofix
     if args.autofix:
         planner = AutofixPlanner()
-        plan_items = planner.generate_plan(findings, policy_config)
+        # Extract autofix config
+        autofix_config = policy_config.get("autofix", {})
+        plan_items = planner.generate_plan(normalized_findings, autofix_config)
         
         if args.autofix == "plan":
             plan_display = format_plan_for_display(plan_items)

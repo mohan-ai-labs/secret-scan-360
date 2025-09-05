@@ -10,13 +10,15 @@ import json
 import urllib.request
 import urllib.error
 from typing import Dict, Any
-from ..core import ValidationResult, ValidationState
+from .core import ValidationResult, ValidationState
 
 
 class GitHubPATLiveValidator:
     """Validator that checks GitHub PAT validity via API."""
     
     name = "github_pat_live"
+    rate_limit_qps = 1.0  # Conservative rate limit
+    requires_network = True
     
     def validate(self, finding: Dict[str, Any]) -> ValidationResult:
         """
@@ -87,6 +89,8 @@ class AWSAccessKeyLiveValidator:
     """Validator that checks AWS Access Key validity via STS."""
     
     name = "aws_ak_live"
+    rate_limit_qps = 0.5  # More conservative for AWS
+    requires_network = True
     
     def validate(self, finding: Dict[str, Any]) -> ValidationResult:
         """
