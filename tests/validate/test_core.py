@@ -178,17 +178,21 @@ class TestRunValidators:
 
         # First call should work
         results1 = run_validators(finding, config)
-        assert len(results1) == 1
-        assert results1[0].state == ValidationState.VALID
+        # Should have results for 2 local Slack validators (both should work) + 2 network validators (skipped)
+        assert len(results1) == 4
+        slack_results = [r for r in results1 if "slack_webhook" in r.validator_name]
+        assert len(slack_results) == 2
+        assert all(r.state == ValidationState.VALID for r in slack_results)
 
         # Now set very low rate limit for second call
         config["validators"]["global_qps"] = 0.01
 
         # Second call should be rate limited
         results2 = run_validators(finding, config)
-        assert len(results2) == 1
-        assert results2[0].state == ValidationState.INDETERMINATE
-        assert "Rate limit exceeded" in results2[0].reason
+        assert len(results2) == 4  # All validators still run but get rate limited
+        rate_limited_results = [r for r in results2 if r.state == ValidationState.INDETERMINATE and "Rate limit exceeded" in r.reason]
+        # Only the Slack validators should be rate limited; network validators are already skipped
+        assert len(rate_limited_results) >= 2
 
     def test_default_config(self):
         """Test with default configuration."""
@@ -199,9 +203,11 @@ class TestRunValidators:
 
         results = run_validators(finding, config)
 
-        assert len(results) == 1
-        assert results[0].state == ValidationState.VALID
-        assert results[0].validator_name == "slack_webhook_format"
+        # Should have 4 validators: 2 Slack (local), 2 network (skipped)
+        assert len(results) == 4
+        slack_results = [r for r in results if r.validator_name == "slack_webhook_format"]
+        assert len(slack_results) == 1
+        assert slack_results[0].state == ValidationState.VALID
 
     def test_validator_exception_handling(self):
         """Test that validator exceptions are handled gracefully."""
@@ -239,9 +245,15 @@ class TestDefaultRegistry:
     """Test default registry functionality."""
 
     def test_default_registry_has_slack_validator(self):
-        """Test that default registry includes Slack validator."""
+        """Test that default registry includes all expected validators."""
         registry = _get_default_registry()
         validators = registry.get_all()
 
-        assert len(validators) == 1
-        assert validators[0].name == "slack_webhook_format"
+        # Should have 4 validators: original Slack + 3 new ones
+        assert len(validators) == 4
+        
+        validator_names = [v.name for v in validators]
+        expected_names = ["slack_webhook_format", "slack_webhook_local", "gcp_sa_key_live", "azure_sas_live"]
+        
+        for name in expected_names:
+            assert name in validator_names
