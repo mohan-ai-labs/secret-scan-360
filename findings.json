@@ -1,7 +1,409 @@
 {
-  "root": "/home/runner/work/secret-scan-360/secret-scan-360/src",
+  "root": "/home/runner/work/secret-scan-360/secret-scan-360/examples/leaks",
   "config": "/home/runner/work/secret-scan-360/secret-scan-360/services/agents/app/config/detectors.yaml",
-  "total": 0,
-  "findings": [],
-  "validation_results": {}
+  "total": 10,
+  "findings": [
+    {
+      "path": "/home/runner/work/secret-scan-360/secret-scan-360/examples/leaks/high-risk/k8s-secrets.yaml",
+      "kind": "Generic API Key",
+      "match": "secr\u2026tleQ",
+      "line": 14,
+      "is_secret": true,
+      "reason": "Matched rule: Generic API Key",
+      "category": "test",
+      "confidence": 0.9,
+      "reasons": [
+        "path:examples?/"
+      ],
+      "risk_score": 5
+    },
+    {
+      "path": "/home/runner/work/secret-scan-360/secret-scan-360/examples/leaks/high-risk/k8s-secrets.yaml",
+      "kind": "GitHub Token",
+      "match": "ghp_\u20265678",
+      "line": 23,
+      "is_secret": true,
+      "reason": "Matched rule: GitHub Token (classic-ish)",
+      "category": "test",
+      "confidence": 0.9,
+      "reasons": [
+        "path:examples?/"
+      ],
+      "risk_score": 5
+    },
+    {
+      "path": "/home/runner/work/secret-scan-360/secret-scan-360/examples/leaks/high-risk/config.py",
+      "kind": "AWS Access Key",
+      "match": "AKIA\u2026MPLE",
+      "line": 13,
+      "is_secret": true,
+      "reason": "Matched rule: AWS Access Key",
+      "category": "test",
+      "confidence": 0.9,
+      "reasons": [
+        "path:examples?/"
+      ],
+      "risk_score": 11
+    },
+    {
+      "path": "/home/runner/work/secret-scan-360/secret-scan-360/examples/leaks/high-risk/config.py",
+      "kind": "GitHub Token",
+      "match": "ghp_\u20267890",
+      "line": 10,
+      "is_secret": true,
+      "reason": "Matched rule: GitHub Token (classic-ish)",
+      "category": "test",
+      "confidence": 0.9,
+      "reasons": [
+        "path:examples?/"
+      ],
+      "risk_score": 11
+    },
+    {
+      "path": "/home/runner/work/secret-scan-360/secret-scan-360/examples/leaks/high-risk/config.py",
+      "kind": "Slack Webhook",
+      "match": "http\u2026XXXX",
+      "line": 24,
+      "is_secret": true,
+      "reason": "Matched rule: Slack Webhook",
+      "category": "test",
+      "confidence": 0.9,
+      "reasons": [
+        "path:examples?/"
+      ],
+      "risk_score": 11
+    },
+    {
+      "path": "/home/runner/work/secret-scan-360/secret-scan-360/examples/leaks/high-risk/docker-compose.yml",
+      "kind": "Generic API Key",
+      "match": "API_\u2026cdef",
+      "line": 12,
+      "is_secret": true,
+      "reason": "Matched rule: Generic API Key",
+      "category": "test",
+      "confidence": 0.9,
+      "reasons": [
+        "path:examples?/"
+      ],
+      "risk_score": 5
+    },
+    {
+      "path": "/home/runner/work/secret-scan-360/secret-scan-360/examples/leaks/test-fixtures/test_auth.py",
+      "kind": "AWS Access Key",
+      "match": "AKIA\u20269012",
+      "line": 12,
+      "is_secret": true,
+      "reason": "Matched rule: AWS Access Key",
+      "category": "test",
+      "confidence": 0.9,
+      "reasons": [
+        "path:fixtures?/"
+      ],
+      "risk_score": 7
+    },
+    {
+      "path": "/home/runner/work/secret-scan-360/secret-scan-360/examples/leaks/test-fixtures/test_auth.py",
+      "kind": "GitHub Token",
+      "match": "ghp_\u20265678",
+      "line": 7,
+      "is_secret": true,
+      "reason": "Matched rule: GitHub Token (classic-ish)",
+      "category": "test",
+      "confidence": 0.9,
+      "reasons": [
+        "path:fixtures?/"
+      ],
+      "risk_score": 7
+    },
+    {
+      "path": "/home/runner/work/secret-scan-360/secret-scan-360/examples/leaks/test-fixtures/documentation.md",
+      "kind": "GitHub Token",
+      "match": "ghp_\u20267890",
+      "line": 29,
+      "is_secret": true,
+      "reason": "Matched rule: GitHub Token (classic-ish)",
+      "category": "test",
+      "confidence": 0.9,
+      "reasons": [
+        "path:fixtures?/"
+      ],
+      "risk_score": 7
+    },
+    {
+      "path": "/home/runner/work/secret-scan-360/secret-scan-360/examples/leaks/expired/old_tokens.py",
+      "kind": "GitHub Token",
+      "match": "ghp_\u20267890",
+      "line": 27,
+      "is_secret": true,
+      "reason": "Matched rule: GitHub Token (classic-ish)",
+      "category": "test",
+      "confidence": 0.9,
+      "reasons": [
+        "path:examples?/"
+      ],
+      "risk_score": 5
+    }
+  ],
+  "validation_results": {
+    "0": [
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook format",
+        "validator_name": "slack_webhook_format"
+      },
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook URL pattern",
+        "validator_name": "slack_webhook_local"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "gcp_sa_key_live"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "azure_sas_live"
+      }
+    ],
+    "1": [
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook format",
+        "validator_name": "slack_webhook_format"
+      },
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook URL pattern",
+        "validator_name": "slack_webhook_local"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "gcp_sa_key_live"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "azure_sas_live"
+      }
+    ],
+    "2": [
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook format",
+        "validator_name": "slack_webhook_format"
+      },
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook URL pattern",
+        "validator_name": "slack_webhook_local"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "gcp_sa_key_live"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "azure_sas_live"
+      }
+    ],
+    "3": [
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook format",
+        "validator_name": "slack_webhook_format"
+      },
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook URL pattern",
+        "validator_name": "slack_webhook_local"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "gcp_sa_key_live"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "azure_sas_live"
+      }
+    ],
+    "4": [
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook format",
+        "validator_name": "slack_webhook_format"
+      },
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook URL pattern",
+        "validator_name": "slack_webhook_local"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "gcp_sa_key_live"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "azure_sas_live"
+      }
+    ],
+    "5": [
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook format",
+        "validator_name": "slack_webhook_format"
+      },
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook URL pattern",
+        "validator_name": "slack_webhook_local"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "gcp_sa_key_live"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "azure_sas_live"
+      }
+    ],
+    "6": [
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook format",
+        "validator_name": "slack_webhook_format"
+      },
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook URL pattern",
+        "validator_name": "slack_webhook_local"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "gcp_sa_key_live"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "azure_sas_live"
+      }
+    ],
+    "7": [
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook format",
+        "validator_name": "slack_webhook_format"
+      },
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook URL pattern",
+        "validator_name": "slack_webhook_local"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "gcp_sa_key_live"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "azure_sas_live"
+      }
+    ],
+    "8": [
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook format",
+        "validator_name": "slack_webhook_format"
+      },
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook URL pattern",
+        "validator_name": "slack_webhook_local"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "gcp_sa_key_live"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "azure_sas_live"
+      }
+    ],
+    "9": [
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook format",
+        "validator_name": "slack_webhook_format"
+      },
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook URL pattern",
+        "validator_name": "slack_webhook_local"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "gcp_sa_key_live"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "azure_sas_live"
+      }
+    ]
+  }
 }

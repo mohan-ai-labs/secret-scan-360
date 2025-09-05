@@ -1,0 +1,24 @@
+# Docker compose with secrets - SYNTHETIC EXAMPLES ONLY
+version: '3.8'
+
+services:
+  web:
+    image: myapp:latest
+    environment:
+      # ⚠️ FAKE CREDENTIALS - DO NOT USE ⚠️
+      - DATABASE_URL=postgres://user:fake_password_123@db:5432/myapp
+      - REDIS_URL=redis://:another_fake_pass@redis:6379
+      - JWT_SECRET=fake-jwt-secret-key-do-not-use-in-production
+      - API_KEY=fake-api-key-1234567890abcdef
+      
+  db:
+    image: postgres:13
+    environment:
+      # SYNTHETIC DATABASE CREDENTIALS
+      - POSTGRES_PASSWORD=fake_db_password_123
+      - POSTGRES_USER=fake_user
+      - POSTGRES_DB=myapp
+      
+  redis:
+    image: redis:7
+    command: redis-server --requirepass fake_redis_password_456

@@ -1,0 +1,174 @@
+name: 🧪 Beta Feedback
+description: Help us improve Secret Scan 360 by sharing your beta testing experience
+title: "[BETA] "
+labels: ["beta-feedback", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for testing Secret Scan 360 beta! Your feedback helps us build a better secret scanner.
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: Which OS are you running SS360 on?
+      options:
+        - Linux (Ubuntu/Debian)
+        - Linux (RHEL/CentOS/Fedora)
+        - macOS (Intel)
+        - macOS (Apple Silicon)
+        - Windows (WSL)
+        - Windows (native)
+        - Docker/Container
+        - GitHub Actions (ubuntu-latest)
+        - GitHub Actions (other)
+        - Other (specify in details)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: repo-size
+    attributes:
+      label: Repository Size
+      description: Approximate size of the repository you tested on
+      options:
+        - Small (< 100 files, < 10MB)
+        - Medium (100-1000 files, 10-100MB)
+        - Large (1000-10000 files, 100MB-1GB)
+        - Very Large (> 10000 files, > 1GB)
+        - Monorepo (multiple projects)
+    validations:
+      required: true
+
+  - type: input
+    id: runtime
+    attributes:
+      label: Scan Runtime
+      description: How long did the scan take? (e.g., "2 minutes", "30 seconds")
+      placeholder: "e.g., 45 seconds"
+    validations:
+      required: true
+
+  - type: textarea
+    id: false-positives
+    attributes:
+      label: False Positives
+      description: Did SS360 flag things that aren't actually secrets? Please describe what was incorrectly flagged.
+      placeholder: |
+        Example:
+        - Flagged "example.com/api/key=demo123" in documentation
+        - Detected test UUID "123e4567-e89b-12d3-a456-426614174000" as secret
+        - Triggered on placeholder values in config templates
+    validations:
+      required: false
+
+  - type: textarea
+    id: missing-detectors
+    attributes:
+      label: Missing Secret Types
+      description: What types of secrets does SS360 miss that you expected it to catch?
+      placeholder: |
+        Example:
+        - Slack webhooks (https://hooks.slack.com/services/...)
+        - Discord bot tokens
+        - Custom API keys for internal services
+        - Database connection strings for PostgreSQL
+    validations:
+      required: false
+
+  - type: textarea
+    id: dx-issues
+    attributes:
+      label: Developer Experience Issues
+      description: What was confusing, frustrating, or could be improved in the user experience?
+      placeholder: |
+        Example:
+        - Installation with pipx failed on my system
+        - Error messages were unclear
+        - Output format was hard to parse
+        - Policy configuration syntax was confusing
+        - Documentation was missing for my use case
+    validations:
+      required: false
+
+  - type: dropdown
+    id: satisfaction
+    attributes:
+      label: Overall Satisfaction
+      description: How satisfied are you with SS360 overall?
+      options:
+        - "5 - Excellent (exceeds expectations)"
+        - "4 - Good (meets expectations)"  
+        - "3 - Okay (has potential but needs work)"
+        - "2 - Poor (significant issues)"
+        - "1 - Very Poor (not usable)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: install-experience
+    attributes:
+      label: Installation Experience
+      description: How did the installation process go? Any issues with pipx or dependencies?
+      placeholder: |
+        Example:
+        - Smooth installation, worked on first try
+        - Had to install pipx first, but then worked fine
+        - Python version conflicts with other tools
+        - Missing system dependencies on Ubuntu
+    validations:
+      required: false
+
+  - type: textarea
+    id: ci-integration
+    attributes:
+      label: CI Integration Feedback
+      description: If you tested SS360 in CI/CD, how was the experience?
+      placeholder: |
+        Example:
+        - Easy to add to GitHub Actions workflow
+        - Policy gates worked as expected  
+        - SARIF upload to GitHub security tab worked
+        - Performance too slow for large repos in CI
+        - Exit codes worked correctly for failing builds
+    validations:
+      required: false
+
+  - type: textarea
+    id: autofix-feedback
+    attributes:
+      label: Autofix Experience
+      description: If you tried the autofix features, how was the experience?
+      placeholder: |
+        Example:
+        - Autofix plan mode was helpful to see what would change
+        - Safety flags felt appropriate
+        - Generated good replacement suggestions
+        - Didn't handle my specific secret type
+        - Would like more granular control
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-feedback
+    attributes:
+      label: Additional Feedback
+      description: Anything else you'd like us to know? Feature requests, bugs, or general thoughts?
+      placeholder: |
+        Any other thoughts, suggestions, or issues you encountered during beta testing.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: follow-up
+    attributes:
+      label: Follow-up
+      description: Would you like us to follow up on your feedback?
+      options:
+        - label: I'm willing to be contacted for follow-up questions about my feedback
+          required: false
+        - label: I'd like to be notified when the issues I reported are addressed
+          required: false
+        - label: I'm interested in participating in future beta testing
+          required: false
