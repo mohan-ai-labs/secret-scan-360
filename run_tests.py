@@ -74,10 +74,12 @@ def test_autofix_planning():
     findings = [
         {
             "id": "github_pat",
+            "kind": "GitHub PAT",  # Add the kind field that planner expects
             "path": "config.py",
             "line": 10,
             "match": "ghp_1234567890123456789012345678901234567890",
             "risk_score": 75,
+            "validator_state": "live",  # Add this to trigger revoke action
         }
     ]
 
@@ -86,8 +88,8 @@ def test_autofix_planning():
 
     # Check actions
     actions = [item.action for item in plan]
-    assert ActionType.REMOVE_LITERAL in actions
-    assert ActionType.REVOKE_TOKEN in actions
+    assert ActionType.REPLACE_LITERAL.value in actions
+    assert ActionType.REVOKE_TOKEN.value in actions
     print("✓ GitHub PAT autofix planning working")
 
     print("All autofix tests passed!")

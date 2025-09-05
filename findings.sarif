@@ -4,7 +4,7 @@
   "runs": [
     {
       "automationDetails": {
-        "id": "ss360-secrets-17504003812-copilot-1"
+        "id": "ss360-secrets-17505859499-copilot-1"
       },
       "tool": {
         "driver": {
@@ -12,46 +12,13 @@
           "informationUri": "https://github.com/mohan-ai-labs/secret-scan-360",
           "rules": [
             {
-              "id": "Generic API Key",
-              "name": "Generic API Key",
+              "id": "Unknown",
+              "name": "Unknown",
               "shortDescription": {
-                "text": "SS360 rule: Generic API Key"
+                "text": "SS360 rule: Unknown"
               },
               "fullDescription": {
-                "text": "Findings of kind Generic API Key"
-              },
-              "helpUri": "https://github.com/mohan-ai-labs/secret-scan-360"
-            },
-            {
-              "id": "GitHub Token",
-              "name": "GitHub Token",
-              "shortDescription": {
-                "text": "SS360 rule: GitHub Token"
-              },
-              "fullDescription": {
-                "text": "Findings of kind GitHub Token"
-              },
-              "helpUri": "https://github.com/mohan-ai-labs/secret-scan-360"
-            },
-            {
-              "id": "AWS Access Key",
-              "name": "AWS Access Key",
-              "shortDescription": {
-                "text": "SS360 rule: AWS Access Key"
-              },
-              "fullDescription": {
-                "text": "Findings of kind AWS Access Key"
-              },
-              "helpUri": "https://github.com/mohan-ai-labs/secret-scan-360"
-            },
-            {
-              "id": "Slack Webhook",
-              "name": "Slack Webhook",
-              "shortDescription": {
-                "text": "SS360 rule: Slack Webhook"
-              },
-              "fullDescription": {
-                "text": "Findings of kind Slack Webhook"
+                "text": "Findings of kind Unknown"
               },
               "helpUri": "https://github.com/mohan-ai-labs/secret-scan-360"
             }
@@ -60,98 +27,44 @@
       },
       "results": [
         {
-          "ruleId": "Generic API Key",
+          "ruleId": "Unknown",
           "ruleIndex": 0,
           "level": "error",
           "message": {
-            "text": "Matched rule: Generic API Key"
+            "text": "AWS Secret Access Key"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "high-risk/k8s-secrets.yaml"
+                  "uri": "."
                 },
                 "region": {
-                  "startLine": 14
+                  "startLine": 4
                 }
               }
             }
           ],
           "properties": {
             "category": "test",
-            "confidence": 0.9,
+            "confidence": 0.7,
             "reasons": [
-              "path:examples?/"
+              "marker:XXX"
             ]
           }
         },
         {
-          "ruleId": "GitHub Token",
-          "ruleIndex": 1,
+          "ruleId": "Unknown",
+          "ruleIndex": 0,
           "level": "error",
           "message": {
-            "text": "Matched rule: GitHub Token (classic-ish)"
+            "text": "AWS Secret Access Key"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "high-risk/k8s-secrets.yaml"
-                },
-                "region": {
-                  "startLine": 23
-                }
-              }
-            }
-          ],
-          "properties": {
-            "category": "test",
-            "confidence": 0.9,
-            "reasons": [
-              "path:examples?/"
-            ]
-          }
-        },
-        {
-          "ruleId": "AWS Access Key",
-          "ruleIndex": 2,
-          "level": "error",
-          "message": {
-            "text": "Matched rule: AWS Access Key"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "high-risk/config.py"
-                },
-                "region": {
-                  "startLine": 13
-                }
-              }
-            }
-          ],
-          "properties": {
-            "category": "test",
-            "confidence": 0.9,
-            "reasons": [
-              "path:examples?/"
-            ]
-          }
-        },
-        {
-          "ruleId": "GitHub Token",
-          "ruleIndex": 1,
-          "level": "error",
-          "message": {
-            "text": "Matched rule: GitHub Token (classic-ish)"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "high-risk/config.py"
+                  "uri": "."
                 },
                 "region": {
                   "startLine": 10
@@ -161,105 +74,78 @@
           ],
           "properties": {
             "category": "test",
-            "confidence": 0.9,
+            "confidence": 0.7,
             "reasons": [
-              "path:examples?/"
+              "marker:XXX"
             ]
           }
         },
         {
-          "ruleId": "Slack Webhook",
-          "ruleIndex": 3,
-          "level": "error",
-          "message": {
-            "text": "Matched rule: Slack Webhook"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "high-risk/config.py"
-                },
-                "region": {
-                  "startLine": 24
-                }
-              }
-            }
-          ],
-          "properties": {
-            "category": "test",
-            "confidence": 0.9,
-            "reasons": [
-              "path:examples?/"
-            ]
-          }
-        },
-        {
-          "ruleId": "Generic API Key",
+          "ruleId": "Unknown",
           "ruleIndex": 0,
           "level": "error",
           "message": {
-            "text": "Matched rule: Generic API Key"
+            "text": "Azure Storage SAS token detected (expires: 2023-01-01T00:00:00Z)"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "high-risk/docker-compose.yml"
+                  "uri": "."
                 },
                 "region": {
-                  "startLine": 12
+                  "startLine": 4
+                }
+              }
+            }
+          ],
+          "properties": {
+            "category": "expired",
+            "confidence": 0.95,
+            "reasons": [
+              "offline:azure_sas_expired"
+            ]
+          }
+        },
+        {
+          "ruleId": "Unknown",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Azure Storage SAS token detected (expires: 2030-12-31T23:59:59Z)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "."
+                },
+                "region": {
+                  "startLine": 10
                 }
               }
             }
           ],
           "properties": {
             "category": "test",
-            "confidence": 0.9,
+            "confidence": 0.7,
             "reasons": [
-              "path:examples?/"
+              "marker:XXX"
             ]
           }
         },
         {
-          "ruleId": "AWS Access Key",
-          "ruleIndex": 2,
+          "ruleId": "Unknown",
+          "ruleIndex": 0,
           "level": "error",
           "message": {
-            "text": "Matched rule: AWS Access Key"
+            "text": "JSON Web Token detected (expires: 2000-01-01T00:00:00)"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "test-fixtures/test_auth.py"
-                },
-                "region": {
-                  "startLine": 12
-                }
-              }
-            }
-          ],
-          "properties": {
-            "category": "test",
-            "confidence": 0.9,
-            "reasons": [
-              "path:fixtures?/"
-            ]
-          }
-        },
-        {
-          "ruleId": "GitHub Token",
-          "ruleIndex": 1,
-          "level": "error",
-          "message": {
-            "text": "Matched rule: GitHub Token (classic-ish)"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "test-fixtures/test_auth.py"
+                  "uri": "."
                 },
                 "region": {
                   "startLine": 7
@@ -268,64 +154,10 @@
             }
           ],
           "properties": {
-            "category": "test",
-            "confidence": 0.9,
+            "category": "expired",
+            "confidence": 0.95,
             "reasons": [
-              "path:fixtures?/"
-            ]
-          }
-        },
-        {
-          "ruleId": "GitHub Token",
-          "ruleIndex": 1,
-          "level": "error",
-          "message": {
-            "text": "Matched rule: GitHub Token (classic-ish)"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "test-fixtures/documentation.md"
-                },
-                "region": {
-                  "startLine": 29
-                }
-              }
-            }
-          ],
-          "properties": {
-            "category": "test",
-            "confidence": 0.9,
-            "reasons": [
-              "path:fixtures?/"
-            ]
-          }
-        },
-        {
-          "ruleId": "GitHub Token",
-          "ruleIndex": 1,
-          "level": "error",
-          "message": {
-            "text": "Matched rule: GitHub Token (classic-ish)"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "expired/old_tokens.py"
-                },
-                "region": {
-                  "startLine": 27
-                }
-              }
-            }
-          ],
-          "properties": {
-            "category": "test",
-            "confidence": 0.9,
-            "reasons": [
-              "path:examples?/"
+              "offline:jwt_expired"
             ]
           }
         }

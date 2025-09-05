@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Dict, List, Optional
 
 try:
@@ -9,6 +10,13 @@ except Exception:  # pragma: no cover
 
     def compute_risk(f: Dict) -> int:
         return 50
+
+
+class ActionType(Enum):
+    """Types of autofix actions."""
+    REPLACE_LITERAL = "replace_literal"
+    REVOKE_TOKEN = "revoke_token"
+    DEACTIVATE_KEY = "deactivate_key"
 
 
 @dataclass
@@ -94,6 +102,10 @@ class AutofixPlanner:
                         )
                     )
         return plan
+    
+    def generate_plan(self, findings: List[Dict]) -> List[PlanItem]:
+        """Alias for plan() for backwards compatibility."""
+        return self.plan(findings)
 
 
 def format_plan_for_display(plan: List[PlanItem]) -> str:

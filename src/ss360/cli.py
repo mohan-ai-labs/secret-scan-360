@@ -14,6 +14,7 @@ Compatibility flags accepted (no-ops today):
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import subprocess
@@ -49,7 +50,12 @@ def main(argv=None):
     sp.add_argument(
         "--policy",
         dest="policy",
-        help="policy file path (compat; no-op)",
+        help="policy file path for enforcement",
+    )
+    sp.add_argument(
+        "--raw",
+        action="store_true",
+        help="raw scan mode - scan files directly without git-based filtering",
     )
     sp.add_argument(
         "--sarif-out",
@@ -107,23 +113,51 @@ def main(argv=None):
         return 0
 
     if args.cmd == "scan":
-        sarif_out = args.sarif_out
-        if not sarif_out and os.getenv("GITHUB_ACTIONS") == "true":
-            sarif_out = "findings.sarif"
-
-        cmd = [
-            sys.executable,
-            "scripts/ci_scan.py",
-            "--json-out",
-            args.json_out,
-            "--root",
-            args.root,
-        ]
-        if sarif_out:
-            cmd += ["--sarif-out", sarif_out]
-        if args.only_category:
-            cmd += ["--only-category", args.only_category]
-        return subprocess.call(cmd)
+        # Use direct scanning instead of shelling out to ci_scan.py
+        from ss360.scanner.direct import scan_with_policy_and_classification
+        from ss360.sarif.export import build_sarif
+        
+        try:
+            # Perform the scan
+            result = scan_with_policy_and_classification(
+                root_path=args.root,
+                policy_path=args.policy,
+                only_category=args.only_category,
+                raw_mode=args.raw,
+            )
+            
+            # Write JSON output
+            json_output = Path(args.json_out)
+            json_output.parent.mkdir(parents=True, exist_ok=True)
+            json_output.write_text(json.dumps(result, indent=2))
+            print(f"[ss360] Wrote report: {json_output}")
+            
+            # Write SARIF output if requested
+            sarif_out = args.sarif_out
+            if not sarif_out and os.getenv("GITHUB_ACTIONS") == "true":
+                sarif_out = "findings.sarif"
+                
+            if sarif_out:
+                sarif = build_sarif(result)
+                sarif_path = Path(sarif_out)
+                sarif_path.parent.mkdir(parents=True, exist_ok=True)
+                sarif_path.write_text(json.dumps(sarif, indent=2))
+                print(f"[ss360] Wrote SARIF: {sarif_path}")
+            
+            print(f"[ss360] Total findings: {result['total']}")
+            
+            # Check policy enforcement
+            policy_result = result.get("policy_result", {})
+            if not policy_result.get("passed", True):
+                print("[ss360] FAIL: Policy violations detected", file=sys.stderr)
+                return 1
+            
+            print("[ss360] PASS")
+            return 0
+            
+        except Exception as e:
+            print(f"[ss360] ERROR: Scan failed: {e}", file=sys.stderr)
+            return 1
 
     if args.cmd == "org":
         if args.org_cmd == "aggregate":
