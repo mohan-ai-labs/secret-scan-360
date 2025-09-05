@@ -18,8 +18,25 @@ jobs:
         run: black .
       - name: Flake8 (lint)
         run: flake8 .
-      - name: SS360 scan
-        run: python scripts/ci_scan.py --json-out findings.json --root .
+      - name: SS360 scan with policy gate
+        run: |
+          # Run scan with network disabled (safe for CI)
+          python -m ss360.cli scan . --policy policy.example.yml --format json --json-out findings.json --sarif-out findings.sarif
+          echo "Scan completed with exit code: $?"
+      - name: Upload SARIF results to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: findings.sarif
+          category: ss360-secrets
+      - name: Upload scan results as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ss360-scan-results
+          path: |
+            findings.json
+            findings.sarif
       - name: Tests required if code changed
         run: python scripts/require_tests_changed.py
       - name: Notify agents (always)
