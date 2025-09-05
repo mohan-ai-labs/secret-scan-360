@@ -19,6 +19,12 @@ CODE_PREFIXES: tuple[str, ...] = (
     "scripts/ci_scan.py",
 )
 
+# Exclude auto-generated packaging files
+EXCLUDE_PATTERNS: tuple[str, ...] = (
+    "src/secret_scan_360.egg-info/",
+    ".egg-info/",
+)
+
 
 def sh(args: list[str], check: bool = True) -> str:
     return subprocess.run(
@@ -63,6 +69,9 @@ def main() -> int:
     changed_tests = any(f.startswith(TEST_DIRS) for f in changed)
 
     def is_code(f: str) -> bool:
+        # Check if file should be excluded
+        if any(f.startswith(pattern) for pattern in EXCLUDE_PATTERNS):
+            return False
         return any(f.startswith(p.rstrip("/")) or f == p for p in CODE_PREFIXES)
 
     changed_code = any(is_code(f) for f in changed)
