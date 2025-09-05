@@ -9,7 +9,7 @@ from . import __version__
 def main(argv=None):
     argv = argv or sys.argv[1:]
     p = argparse.ArgumentParser(prog="ss360", description="Secret Scan 360")
-    p.add_argument("-v","--version", action="store_true", help="print version and exit")
+    p.add_argument("-v", "--version", action="store_true", help="print version and exit")
 
     sub = p.add_subparsers(dest="cmd")
     sub.add_parser("version", help="print version")
@@ -18,19 +18,20 @@ def main(argv=None):
     sp.add_argument("root", nargs="?", default=".", help="path to scan")
     sp.add_argument("--json-out", dest="json_out", default="findings.json",
                     help="where to write JSON results (default: findings.json)")
-    sp.add_argument("--policy", dest="policy", 
+    sp.add_argument("--policy", dest="policy",
                     help="path to policy configuration file")
     sp.add_argument("--validators", dest="validators", action="store_true",
                     help="enable validator pipeline (requires --policy)")
 
     args = p.parse_args(argv)
-    if args.version or args.cmd=="version":
+    if args.version or args.cmd == "version":
         print(__version__)
         return 0
-    if args.cmd=="scan":
+    if args.cmd == "scan":
         # Use the new integrated scan function instead of calling external script
         return _run_scan(args)
-    p.print_help(); return 0
+    p.print_help()
+    return 0
 
 
 def _run_scan(args):
@@ -42,12 +43,12 @@ def _run_scan(args):
     except ImportError as e:
         print(f"Error importing modules: {e}", file=sys.stderr)
         return 1
-    
+
     root = Path(args.root).resolve()
     if not root.exists():
         print(f"[scan] Root path not found: {root}", file=sys.stderr)
         return 2
-    
+
     # Load configuration
     config = {}
     if args.policy:
@@ -61,7 +62,7 @@ def _run_scan(args):
         # Use default policy if validators are enabled but no policy specified
         config = get_default_policy_config()
         print("[scan] Using default policy for validators")
-    
+
     # Configure scanner (use default detector config for now)
     try:
         # For now, use a basic config - in future this could be configurable
@@ -72,7 +73,7 @@ def _run_scan(args):
             # Create a minimal scanner without external config
             from services.agents.app.detectors.registry import DetectorRegistry
             from services.agents.app.detectors.regex_detector import RegexDetector
-            
+
             registry = DetectorRegistry()
             # Add basic patterns
             rules = [
@@ -90,7 +91,7 @@ def _run_scan(args):
                 },
                 {
                     "name": "Slack Webhook",
-                    "kind": "Slack Webhook", 
+                    "kind": "Slack Webhook",
                     "pattern": r"https://hooks\.slack\.com/services/[A-Z0-9]{9}/[A-Z0-9]{9}/[A-Za-z0-9]{24}",
                     "redact": True
                 }
@@ -102,18 +103,18 @@ def _run_scan(args):
     except Exception as e:
         print(f"[scan] Error setting up scanner: {e}", file=sys.stderr)
         return 1
-    
+
     # Run scan
     exclude_globs = [
         "**/.git/**",
-        "**/.venv/**", 
+        "**/.venv/**",
         "**/node_modules/**",
         "**/dist/**",
         "**/build/**",
         "**/.pytest_cache/**",
         "**/__pycache__/**",
     ]
-    
+
     try:
         findings = scanner.scan_paths(
             [root],
@@ -124,7 +125,7 @@ def _run_scan(args):
     except Exception as e:
         print(f"[scan] Error during scan: {e}", file=sys.stderr)
         return 1
-    
+
     # Run validators if enabled
     validation_results = {}
     if args.validators or args.policy:
@@ -135,11 +136,11 @@ def _run_scan(args):
                 # In a real implementation, this would be handled by the scanner
                 # For now, we'll reconstruct from the finding data for Slack webhooks
                 validation_finding = finding.copy()
-                
+
                 # If this is a Slack webhook finding, use a test URL that matches the pattern
                 if finding.get("kind") == "Slack Webhook":
                     validation_finding["match"] = "https://hooks.slack.com/services/T12345678/B12345678/1234567890ABCDEF12345678"
-                
+
                 validator_results = run_validators(validation_finding, config)
                 validation_results[i] = [
                     {
@@ -158,7 +159,7 @@ def _run_scan(args):
                     "reason": f"Validator error: {str(e)}",
                     "validator_name": "error"
                 }]
-    
+
     # Create output report
     report = {
         "root": str(root),
@@ -169,16 +170,16 @@ def _run_scan(args):
             "results": validation_results
         } if (args.validators or args.policy) else None
     }
-    
+
     if args.policy:
         report["policy"] = str(Path(args.policy).resolve())
-    
+
     # Write JSON output
     if args.json_out:
         Path(args.json_out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.json_out).write_text(json.dumps(report, indent=2))
         print(f"[scan] Wrote report: {args.json_out}")
-    
+
     # Print summary
     print(f"[scan] Total findings: {report['total']}")
     if validation_results:
@@ -189,7 +190,7 @@ def _run_scan(args):
                 state = result["state"]
                 state_counts[state] = state_counts.get(state, 0) + 1
         print(f"[scan] Validation results: {dict(state_counts)}")
-    
+
     print("[scan] COMPLETE")
     return 0
 
