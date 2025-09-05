@@ -43,8 +43,10 @@ DEFAULT_EXCLUDES = [
     "**/.pytest_cache/**",
     "**/__pycache__/**",
     # Project content we don't want to scan for secrets in CI
-    "/docs/",
-    "/tests/",
+    "docs/**",
+    "**/docs/**",
+    "tests/**",
+    "**/tests/**",
     "detectors/**",
     "**/detectors/**",
     # Config and packaging junk
@@ -128,6 +130,23 @@ def filter_findings(
     return keep
 
 
+def drop_ci_noise(findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Remove findings originating from docs/, tests/, or detectors/ trees.
+    This is a safety net to keep CI gating focused on real source code,
+    even if glob matching misses on some platforms/paths.
+    """
+    noise_markers = ("/docs/", "/tests/", "/detectors/")
+    out: List[Dict[str, Any]] = []
+    for f in findings:
+        p = str(f.get("path") or "")
+        p_norm = p.replace("\\", "/")  # normalize for Windows, just in case
+        if any(marker in p_norm for marker in noise_markers):
+            continue
+        out.append(f)
+    return out
+
+
 def main() -> int:
     args = parse_args()
 
@@ -151,6 +170,7 @@ def main() -> int:
         max_bytes=1_000_000,
     )
     findings = filter_findings(findings, args.min_match_len)
+    findings = drop_ci_noise(findings)  # final CI-focused filter
 
     report = {
         "root": str(root),
