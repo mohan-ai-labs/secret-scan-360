@@ -65,13 +65,9 @@ jobs:
             
             const issueTitle = 'Org Scan Dashboard';
             const issueBody = `# Organization Security Scan Dashboard
-            
-Last updated: ${new Date().toISOString()}
-
-${summaryContent}
-
----
-*This issue is automatically updated by the nightly org scan workflow.*`;
+            Last updated: ${new Date().toISOString()}
+            ${summaryContent}---
+            *This issue is automatically updated by the nightly org scan workflow.*`;
             
             // Search for existing dashboard issue
             const { data: issues } = await github.rest.issues.listForRepo({
