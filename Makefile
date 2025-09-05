@@ -1,5 +1,5 @@
 
-.PHONY: up down build init-db health scan clean logs
+.PHONY: up down docker-build init-db health scan docker-clean logs build clean release-testpypi release-pypi
 
 ENV_FILE ?= .env
 
@@ -9,7 +9,7 @@ up: ## Start all services
 down: ## Stop all services (keep volumes)
 	docker compose --env-file $(ENV_FILE) down
 
-build: ## Build images
+docker-build: ## Build images
 	docker compose --env-file $(ENV_FILE) build
 
 init-db: ## Apply schema to Postgres
@@ -25,5 +25,18 @@ scan: ## Trigger a demo scan (Vault repo)
 logs: ## Tail logs
 	docker compose --env-file $(ENV_FILE) logs -f
 
-clean: ## Stop and remove volumes (DANGEROUS)
+docker-clean: ## Stop and remove Docker volumes (DANGEROUS)
 	docker compose --env-file $(ENV_FILE) down -v
+
+# Python packaging targets
+build: ## Build Python wheel and sdist
+	python -m build --no-isolation
+
+clean: ## Clean Python build artifacts
+	rm -rf build/ dist/ *.egg-info/ src/*.egg-info/
+
+release-testpypi: build ## Build and upload to TestPyPI
+	python -m twine upload --repository testpypi dist/*
+
+release-pypi: build ## Build and upload to PyPI
+	python -m twine upload dist/*
