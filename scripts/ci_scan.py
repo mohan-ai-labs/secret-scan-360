@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import List, Dict, Any
@@ -29,28 +30,29 @@ if str(ROOT) not in sys.path:
 from ss360.scanner import Scanner  # noqa: E402
 
 
+# Use recursive globs so top-level dirs are excluded too
 DEFAULT_EXCLUDES = [
     "**/.git/**",
+    "**/.svn/**",
+    "**/.hg/**",
     "**/.venv/**",
+    "**/venv/**",
     "**/node_modules/**",
     "**/dist/**",
     "**/build/**",
     "**/.pytest_cache/**",
     "**/__pycache__/**",
-    "*/docs/**/*",
-    "*/tests/**/*",
-    "*/services/agents/app/config/detectors.yaml",
-    "*/detectors/*",
-    # Exclude validator core files and policy configs
-    "*/src/ss360/validate/**/*",
-    "*/src/ss360/policy/**/*", 
-    "**/policy.example.yml",
-    "**/policy.yml",
-    # Exclude any test fixtures or example files
-    "**/test_*.py",
-    "**/example_*.py",
-    "**/fixtures/**/*",
-    "**/examples/**/*",
+    # Project content we don't want to scan for secrets in CI
+    "docs/**",
+    "**/docs/**",
+    "tests/**",
+    "**/tests/**",
+    "detectors/**",
+    "**/detectors/**",
+    # Config and packaging junk
+    "**/services/agents/app/config/detectors.yaml",
+    "src/secret_scan_360.egg-info/**",
+    "**/*.egg-info/**",
 ]
 
 
@@ -88,10 +90,12 @@ def parse_args() -> argparse.Namespace:
         default=0,
         help="Minimum length for the 'match' string to keep a finding (default: 0)",
     )
+    # Allow environment to override the default max_findings if desired
+    default_max = int(os.getenv("SS360_CI_MAX_FINDINGS", "0"))
     p.add_argument(
         "--max-findings",
         type=int,
-        default=0,
+        default=default_max,
         help="Fail if total findings exceed this number (default: 0 means fail on any finding)",
     )
     p.add_argument(
@@ -169,6 +173,13 @@ def main() -> int:
             f"[ci-scan] FAIL: findings ({report['total']}) > max_findings ({args.max_findings})",
             file=sys.stderr,
         )
+        # Print a short summary to make triage easier in CI logs
+        for f in report["findings"][:10]:
+            path = f.get("path", "<unknown>")
+            line = f.get("line", "?")
+            kind = f.get("kind", f.get("id", "<kind?>"))
+            reason = f.get("reason", f.get("title", ""))
+            print(f"[ci-scan] finding: {path}:{line} kind={kind} reason={reason}", file=sys.stderr)
         return 1
 
     print("[ci-scan] PASS")
