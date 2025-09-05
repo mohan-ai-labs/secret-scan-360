@@ -1,0 +1,54 @@
+{
+  "root": "/home/runner/work/secret-scan-360/secret-scan-360/local_tests/samples.env",
+  "total": 3,
+  "findings": [
+    {
+      "path": "/home/runner/work/secret-scan-360/secret-scan-360/local_tests/samples.env",
+      "kind": "AWS Access Key",
+      "match": "AKIA\u2026MPLE",
+      "line": 8,
+      "is_secret": true,
+      "reason": "Matched rule: AWS Access Key",
+      "category": "unknown",
+      "confidence": 0.5,
+      "reasons": [
+        "no_classification"
+      ]
+    },
+    {
+      "path": "/home/runner/work/secret-scan-360/secret-scan-360/local_tests/samples.env",
+      "kind": "GitHub Token",
+      "match": "ghp_\u20267890",
+      "line": 4,
+      "is_secret": true,
+      "reason": "Matched rule: GitHub Token (classic-ish)",
+      "category": "unknown",
+      "confidence": 0.5,
+      "reasons": [
+        "no_classification"
+      ]
+    },
+    {
+      "path": "/home/runner/work/secret-scan-360/secret-scan-360/local_tests/samples.env",
+      "kind": "Slack Webhook",
+      "match": "http\u2026XXXX",
+      "line": 12,
+      "is_secret": true,
+      "reason": "Matched rule: Slack Webhook",
+      "category": "unknown",
+      "confidence": 0.5,
+      "reasons": [
+        "no_classification"
+      ]
+    }
+  ],
+  "validation_results": {
+    "0": [],
+    "1": [],
+    "2": []
+  },
+  "policy_result": {
+    "passed": true,
+    "violations": []
+  }
+}
