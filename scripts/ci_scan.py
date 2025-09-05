@@ -44,9 +44,9 @@ DEFAULT_EXCLUDES = [
     "**/__pycache__/**",
     # Project content we don't want to scan for secrets in CI
     "docs/**",
-    "**/docs/**",
+    "/docs/",
     "tests/**",
-    "**/tests/**",
+    "/tests/",
     "detectors/**",
     "**/detectors/**",
     # Config and packaging junk
