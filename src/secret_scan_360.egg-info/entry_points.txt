@@ -1,2 +1,0 @@
-[console_scripts]
-ss360 = ss360.cli:main
