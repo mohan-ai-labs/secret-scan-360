@@ -35,11 +35,11 @@ def detect(lines: Iterable[str]) -> Iterator[Dict[str, object]]:
                     key_type = "AWS Session Token"
                 else:
                     key_type = "AWS Secret Access Key"
-                
+
                 yield {
                     "id": "aws_keypair",
                     "title": key_type,
-                    "severity": "high", 
+                    "severity": "high",
                     "description": f"{key_type} detected",
                     "line": i,
                     "match": key_value,

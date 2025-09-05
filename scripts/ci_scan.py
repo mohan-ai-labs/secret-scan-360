@@ -285,7 +285,10 @@ def main() -> int:
             line = f.get("line", "?")
             kind = f.get("kind", f.get("id", "<kind?>"))
             reason = f.get("reason", f.get("title", ""))
-            print(f"[ci-scan] finding: {path}:{line} kind={kind} reason={reason}", file=sys.stderr)
+            print(
+                f"[ci-scan] finding: {path}:{line} kind={kind} reason={reason}",
+                file=sys.stderr,
+            )
         return 1
 
     print("[ci-scan] PASS")

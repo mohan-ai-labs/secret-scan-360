@@ -1,12 +1,13 @@
-#!/usr/bin/env python3 
+#!/usr/bin/env python3
 import json
 import os
 import sys
 import urllib.request
 
+
 def main():
     webhook = os.getenv("WEBHOOK", "")
-    token   = os.getenv("TOKEN", "")
+    token = os.getenv("TOKEN", "")
 
     # If not configured (e.g., forks), exit cleanly.
     if not webhook:
@@ -14,13 +15,13 @@ def main():
         return
 
     payload = {
-        "event":    "gha.status",
-        "repo":     os.getenv("GITHUB_REPOSITORY", ""),
-        "status":   os.getenv("JOB_STATUS", ""),            # success | failure | cancelled
-        "job":      os.getenv("GITHUB_JOB", ""),
-        "job_id":   f"gha-{os.getenv('GITHUB_RUN_ID','')}",
-        "branch":   os.getenv("GITHUB_REF_NAME", ""),
-        "pr_number":os.getenv("PR_NUMBER", ""),
+        "event": "gha.status",
+        "repo": os.getenv("GITHUB_REPOSITORY", ""),
+        "status": os.getenv("JOB_STATUS", ""),  # success | failure | cancelled
+        "job": os.getenv("GITHUB_JOB", ""),
+        "job_id": f"gha-{os.getenv('GITHUB_RUN_ID','')}",
+        "branch": os.getenv("GITHUB_REF_NAME", ""),
+        "pr_number": os.getenv("PR_NUMBER", ""),
     }
 
     data = json.dumps(payload).encode("utf-8")
@@ -41,6 +42,7 @@ def main():
             print(f"Hub response: {body}")
     except Exception as e:
         print(f"Hub notify failed: {e}", file=sys.stderr)
+
 
 if __name__ == "__main__":
     main()

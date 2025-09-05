@@ -4,7 +4,8 @@ Tests for risk scoring system.
 """
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from ss360.risk.score import (
     calculate_risk_score,
@@ -80,11 +81,7 @@ class TestRiskScoring:
 
     def test_risk_summary(self):
         """Test complete risk summary generation."""
-        finding = {
-            "id": "github_pat",
-            "path": "config/production.py",
-            "line": 15
-        }
+        finding = {"id": "github_pat", "path": "config/production.py", "line": 15}
 
         validation_results = [{"state": "valid", "evidence": "confirmed"}]
 
@@ -117,7 +114,9 @@ def test_github_pat_detector():
     assert findings[0]["title"] == "GitHub Personal Access Token"
 
     # Test fine-grained PAT
-    lines = ["TOKEN = github_pat_1234567890123456789_123456789012345678901234567890123456789012345678901234567890123"]
+    lines = [
+        "TOKEN = github_pat_1234567890123456789_123456789012345678901234567890123456789012345678901234567890123"
+    ]
     findings = list(detect(lines))
     assert len(findings) == 1
 

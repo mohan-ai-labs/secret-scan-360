@@ -7,17 +7,18 @@ try:
     # Optional import; if not present, we can still operate in degraded mode
     from ss360.risk.score import risk as compute_risk  # type: ignore
 except Exception:  # pragma: no cover
+
     def compute_risk(f: Dict) -> int:
         return 50
 
 
 @dataclass
 class PlanItem:
-    action: str               # e.g., "replace_literal", "revoke_token", "deactivate_key"
+    action: str  # e.g., "replace_literal", "revoke_token", "deactivate_key"
     path: str
     line: int
     replacement: Optional[str]
-    provider: Optional[str]   # e.g., "github", "aws"
+    provider: Optional[str]  # e.g., "github", "aws"
     reversible: bool = True
 
 
@@ -28,7 +29,12 @@ class AutofixPlanner:
       - AWS Access Key → replace with Secrets Manager ref; optional deactivate via provider
     """
 
-    SUPPORTED_KINDS = {"GitHub Token", "GitHub PAT", "GitHub Personal Access Token", "AWS Access Key"}
+    SUPPORTED_KINDS = {
+        "GitHub Token",
+        "GitHub PAT",
+        "GitHub Personal Access Token",
+        "AWS Access Key",
+    }
 
     def __init__(self, *, confirmed_only: bool = True, risk_threshold: int = 70):
         self.confirmed_only = confirmed_only
@@ -122,49 +128,44 @@ from .planner import PlanItem, ActionType
 
 class AutofixApplier:
     """Applies autofix plans to files and systems."""
-    
+
     def __init__(self, dry_run: bool = True):
         """
         Initialize applier.
-        
+
         Args:
             dry_run: If True, don't make actual changes
         """
         self.dry_run = dry_run
-    
-    def apply_plan(self, plan_items: List[PlanItem], confirmation_required: bool = True) -> Dict[str, Any]:
+
+    def apply_plan(
+        self, plan_items: List[PlanItem], confirmation_required: bool = True
+    ) -> Dict[str, Any]:
         """
         Apply autofix plan.
-        
+
         Args:
             plan_items: List of plan items to apply
             confirmation_required: Whether to require confirmation
-            
+
         Returns:
             Result dictionary with status and applied actions
         """
         if confirmation_required and not self.dry_run:
             # In real implementation, would prompt for confirmation
             pass
-        
+
         applied_actions = []
-        
+
         for item in plan_items:
             try:
                 result = self._apply_plan_item(item)
                 applied_actions.append(result)
             except Exception as e:
-                return {
-                    "status": "error",
-                    "error": str(e),
-                    "applied": applied_actions
-                }
-        
-        return {
-            "status": "success",
-            "applied": applied_actions
-        }
-    
+                return {"status": "error", "error": str(e), "applied": applied_actions}
+
+        return {"status": "success", "applied": applied_actions}
+
     def _apply_plan_item(self, item: PlanItem) -> Dict[str, Any]:
         """Apply a single plan item."""
         if item.action == ActionType.REMOVE_LITERAL:
@@ -177,7 +178,7 @@ class AutofixApplier:
             return self._apply_deactivate_key(item)
         else:
             raise ValueError(f"Unknown action type: {item.action}")
-    
+
     def _apply_remove_literal(self, item: PlanItem) -> Dict[str, Any]:
         """Apply remove literal action."""
         if self.dry_run:
@@ -186,9 +187,9 @@ class AutofixApplier:
                 "path": item.path,
                 "line": item.line,
                 "description": item.description,
-                "dry_run": True
+                "dry_run": True,
             }
-        
+
         # In real implementation, would modify the file
         return {
             "action": "remove_literal",
@@ -196,9 +197,9 @@ class AutofixApplier:
             "line": item.line,
             "description": item.description,
             "dry_run": False,
-            "backup_created": True
+            "backup_created": True,
         }
-    
+
     def _apply_replace_with_secret_ref(self, item: PlanItem) -> Dict[str, Any]:
         """Apply replace with secret reference action."""
         if self.dry_run:
@@ -207,9 +208,9 @@ class AutofixApplier:
                 "path": item.path,
                 "line": item.line,
                 "description": item.description,
-                "dry_run": True
+                "dry_run": True,
             }
-        
+
         # In real implementation, would modify the file and set up secret
         return {
             "action": "replace_with_secret_ref",
@@ -217,9 +218,9 @@ class AutofixApplier:
             "line": item.line,
             "description": item.description,
             "dry_run": False,
-            "secret_created": True
+            "secret_created": True,
         }
-    
+
     def _apply_revoke_token(self, item: PlanItem) -> Dict[str, Any]:
         """Apply revoke token action."""
         if self.dry_run:
@@ -227,18 +228,18 @@ class AutofixApplier:
                 "action": "revoke_token",
                 "provider": item.provider,
                 "description": item.description,
-                "dry_run": True
+                "dry_run": True,
             }
-        
+
         # In real implementation, would call provider API to revoke
         return {
             "action": "revoke_token",
             "provider": item.provider,
             "description": item.description,
             "dry_run": False,
-            "revoked": True
+            "revoked": True,
         }
-    
+
     def _apply_deactivate_key(self, item: PlanItem) -> Dict[str, Any]:
         """Apply deactivate key action."""
         if self.dry_run:
@@ -246,14 +247,14 @@ class AutofixApplier:
                 "action": "deactivate_key",
                 "provider": item.provider,
                 "description": item.description,
-                "dry_run": True
+                "dry_run": True,
             }
-        
+
         # In real implementation, would call provider API to deactivate
         return {
             "action": "deactivate_key",
             "provider": item.provider,
             "description": item.description,
             "dry_run": False,
-            "deactivated": True
+            "deactivated": True,
         }

@@ -5,13 +5,10 @@ Tests to ensure no plaintext secrets appear in evidence or logs.
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from ss360.validate.core import (
-    SlackWebhookValidator,
-    run_validators,
-    _redact_evidence
-)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
+from ss360.validate.core import SlackWebhookValidator, run_validators, _redact_evidence
 
 
 class TestSecretRedaction:
@@ -77,12 +74,7 @@ class TestSecretRedaction:
         webhook_url = "https://hooks.slack.com/services/T12345678/B12345678/1234567890ABCDEF12345678"
         finding = {"match": webhook_url}
 
-        config = {
-            "validators": {
-                "allow_network": False,
-                "global_qps": 10.0
-            }
-        }
+        config = {"validators": {"allow_network": False, "global_qps": 10.0}}
 
         results = run_validators(finding, config)
 
@@ -98,12 +90,7 @@ class TestSecretRedaction:
         webhook_url = "https://hooks.slack.com/services/T12345678/B12345678/SECRETTOKEN123456789ABC"
         finding = {"match": webhook_url}
 
-        config = {
-            "validators": {
-                "allow_network": False,
-                "global_qps": 10.0
-            }
-        }
+        config = {"validators": {"allow_network": False, "global_qps": 10.0}}
 
         results = run_validators(finding, config)
 

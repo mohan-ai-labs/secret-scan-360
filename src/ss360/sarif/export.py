@@ -58,7 +58,13 @@ def build_sarif(report: Dict[str, Any]) -> Dict[str, Any]:
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
         "runs": [
             {
-                "tool": {"driver": {"name": "SS360", "informationUri": "https://github.com/mohan-ai-labs/secret-scan-360", "rules": rules}},
+                "tool": {
+                    "driver": {
+                        "name": "SS360",
+                        "informationUri": "https://github.com/mohan-ai-labs/secret-scan-360",
+                        "rules": rules,
+                    }
+                },
                 "results": results,
             }
         ],

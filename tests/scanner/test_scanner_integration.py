@@ -2,6 +2,7 @@ try:
     import yaml
     from services.agents.app.detectors.registry import DetectorRegistry
     from services.agents.app.detectors.regex_detector import RegexDetector
+
     YAML_AVAILABLE = True
 except ImportError:
     yaml = None
