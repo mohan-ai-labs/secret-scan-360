@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Dict, Any
 
@@ -8,6 +9,7 @@ def build_sarif(report: Dict[str, Any]) -> Dict[str, Any]:
     findings = report.get("findings", []) or []
     root = str(report.get("root", ""))
 
+    # Collect rules by 'kind'
     rule_ids = {}
     rules = []
     for f in findings:
@@ -53,11 +55,19 @@ def build_sarif(report: Dict[str, Any]) -> Dict[str, Any]:
             }
         )
 
+    # Make this upload unique per job by setting automationDetails.id
+    auto_id = "ss360-secrets-{run}-{job}-{attempt}".format(
+        run=os.getenv("GITHUB_RUN_ID", "local"),
+        job=os.getenv("GITHUB_JOB", "job"),
+        attempt=os.getenv("GITHUB_RUN_ATTEMPT", "1"),
+    )
+
     return {
         "version": "2.1.0",
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
         "runs": [
             {
+                "automationDetails": {"id": auto_id},
                 "tool": {
                     "driver": {
                         "name": "SS360",

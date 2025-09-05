@@ -5,6 +5,10 @@ Secret Scan 360 - Command Line Interface
 Safe defaults:
 - ss360 scan <root> --json-out findings.json
 - In GitHub Actions, also writes findings.sarif automatically.
+
+Compatibility flags accepted (no-ops today):
+- --policy PATH
+- --format {text,json,sarif}
 """
 
 from __future__ import annotations
@@ -31,6 +35,18 @@ def main(argv=None):
         dest="json_out",
         default="findings.json",
         help="where to write JSON results (default: findings.json)",
+    )
+    # Accept but ignore (compat)
+    sp.add_argument(
+        "--format",
+        choices=["text", "json", "sarif"],
+        default="json",
+        help="output format hint (compat; no-op)",
+    )
+    sp.add_argument(
+        "--policy",
+        dest="policy",
+        help="policy file path (compat; no-op)",
     )
     sp.add_argument(
         "--sarif-out",

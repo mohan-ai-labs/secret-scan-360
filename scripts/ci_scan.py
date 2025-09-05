@@ -55,11 +55,19 @@ DEFAULT_EXCLUDES = [
     "**/services/agents/app/config/detectors.yaml",
     "src/secret_scan_360.egg-info/**",
     "**/*.egg-info/**",
+    # Demo/test samples at repo root (exclude to keep CI gate signal-only)
+    "test_secrets.py",
+    "**/test_secrets.py",
+    "test_demo.sh",
+    "**/test_demo.sh",
+    "demo_e2e.sh",
+    "**/demo_e2e.sh",
 ]
 
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Secret scan CI gate")
+    # Primary options
     p.add_argument("--root", default=".", help="Root path to scan (default: .)")
     p.add_argument(
         "--config",
@@ -67,6 +75,7 @@ def parse_args() -> argparse.Namespace:
         default="services/agents/app/config/detectors.yaml",
         help="Detectors YAML config",
     )
+    # Aliases used by older steps/workflows
     p.add_argument(
         "--detectors",
         dest="detectors",
@@ -90,6 +99,7 @@ def parse_args() -> argparse.Namespace:
         default=0,
         help="Minimum length for the 'match' string to keep a finding (default: 0)",
     )
+    # Allow environment to override the default max_findings if desired
     default_max = int(os.getenv("SS360_CI_MAX_FINDINGS", "0"))
     p.add_argument(
         "--max-findings",
@@ -102,11 +112,13 @@ def parse_args() -> argparse.Namespace:
         dest="json_out",
         help="Write JSON report to this path",
     )
+    # Alias used by workflow snippet
     p.add_argument(
         "--out",
         dest="out",
         help="Alias for --json-out",
     )
+    # New: write SARIF to a path for GitHub Code Scanning upload
     p.add_argument(
         "--sarif-out",
         dest="sarif_out",
@@ -127,17 +139,23 @@ def filter_findings(
         if isinstance(match_val, str) and len(match_val) >= min_match_len:
             keep.append(f)
         else:
+            # Some detectors may not set 'match'; keep conservative behavior:
             if not match_val and min_match_len == 0:
                 keep.append(f)
     return keep
 
 
 def drop_ci_noise(findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Remove findings originating from docs/, tests/, or detectors/ trees.
+    This is a safety net to keep CI gating focused on real source code,
+    even if glob matching misses on some platforms/paths.
+    """
     noise_markers = ("/docs/", "/tests/", "/detectors/")
     out: List[Dict[str, Any]] = []
     for f in findings:
         p = str(f.get("path") or "")
-        p_norm = p.replace("\\", "/")
+        p_norm = p.replace("\\", "/")  # normalize for Windows, just in case
         if any(marker in p_norm for marker in noise_markers):
             continue
         out.append(f)
@@ -167,7 +185,7 @@ def main() -> int:
         max_bytes=1_000_000,
     )
     findings = filter_findings(findings, args.min_match_len)
-    findings = drop_ci_noise(findings)
+    findings = drop_ci_noise(findings)  # final CI-focused filter
 
     report = {
         "root": str(root),
@@ -182,6 +200,7 @@ def main() -> int:
         Path(json_out).write_text(json.dumps(report, indent=2))
         print(f"[ci-scan] Wrote report: {json_out}")
 
+    # Write SARIF (before gating) if requested
     if args.sarif_out:
         sarif = build_sarif(report)
         sarif_path = Path(args.sarif_out)
@@ -195,6 +214,7 @@ def main() -> int:
             f"[ci-scan] FAIL: findings ({report['total']}) > max_findings ({args.max_findings})",
             file=sys.stderr,
         )
+        # Print a short summary to make triage easier in CI logs
         for f in report["findings"][:10]:
             path = f.get("path", "<unknown>")
             line = f.get("line", "?")
