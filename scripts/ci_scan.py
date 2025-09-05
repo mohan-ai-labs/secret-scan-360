@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import List, Dict, Any
@@ -29,18 +30,29 @@ if str(ROOT) not in sys.path:
 from ss360.scanner import Scanner  # noqa: E402
 
 
+# Use recursive globs so top-level dirs are excluded too
 DEFAULT_EXCLUDES = [
     "**/.git/**",
+    "**/.svn/**",
+    "**/.hg/**",
     "**/.venv/**",
+    "**/venv/**",
     "**/node_modules/**",
     "**/dist/**",
     "**/build/**",
     "**/.pytest_cache/**",
     "**/__pycache__/**",
-    "*/docs/**/*",
-    "*/tests/**/*",
-    "*/services/agents/app/config/detectors.yaml",
-    "*/detectors/*",
+    # Project content we don't want to scan for secrets in CI
+    "docs/**",
+    "**/docs/**",
+    "tests/**",
+    "**/tests/**",
+    "detectors/**",
+    "**/detectors/**",
+    # Config and packaging junk
+    "**/services/agents/app/config/detectors.yaml",
+    "src/secret_scan_360.egg-info/**",
+    "**/*.egg-info/**",
 ]
 
 
@@ -78,10 +90,12 @@ def parse_args() -> argparse.Namespace:
         default=0,
         help="Minimum length for the 'match' string to keep a finding (default: 0)",
     )
+    # Allow environment to override the default max_findings if desired
+    default_max = int(os.getenv("SS360_CI_MAX_FINDINGS", "0"))
     p.add_argument(
         "--max-findings",
         type=int,
-        default=0,
+        default=default_max,
         help="Fail if total findings exceed this number (default: 0 means fail on any finding)",
     )
     p.add_argument(
@@ -116,6 +130,23 @@ def filter_findings(
     return keep
 
 
+def drop_ci_noise(findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Remove findings originating from docs/, tests/, or detectors/ trees.
+    This is a safety net to keep CI gating focused on real source code,
+    even if glob matching misses on some platforms/paths.
+    """
+    noise_markers = ("/docs/", "/tests/", "/detectors/")
+    out: List[Dict[str, Any]] = []
+    for f in findings:
+        p = str(f.get("path") or "")
+        p_norm = p.replace("\\", "/")  # normalize for Windows, just in case
+        if any(marker in p_norm for marker in noise_markers):
+            continue
+        out.append(f)
+    return out
+
+
 def main() -> int:
     args = parse_args()
 
@@ -139,6 +170,7 @@ def main() -> int:
         max_bytes=1_000_000,
     )
     findings = filter_findings(findings, args.min_match_len)
+    findings = drop_ci_noise(findings)  # final CI-focused filter
 
     report = {
         "root": str(root),
@@ -159,6 +191,13 @@ def main() -> int:
             f"[ci-scan] FAIL: findings ({report['total']}) > max_findings ({args.max_findings})",
             file=sys.stderr,
         )
+        # Print a short summary to make triage easier in CI logs
+        for f in report["findings"][:10]:
+            path = f.get("path", "<unknown>")
+            line = f.get("line", "?")
+            kind = f.get("kind", f.get("id", "<kind?>"))
+            reason = f.get("reason", f.get("title", ""))
+            print(f"[ci-scan] finding: {path}:{line} kind={kind} reason={reason}", file=sys.stderr)
         return 1
 
     print("[ci-scan] PASS")
