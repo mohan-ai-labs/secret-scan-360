@@ -40,6 +40,34 @@ Deterministic 0-100 risk scoring based on:
 - **Path Context**: Production paths (↑20%), test paths (↓30%), docs (↓70%)
 - **Repository Exposure**: Public repos (↑20%), external contributors (↑10%)
 - **Historical Age**: Long-lived secrets (↑20% if >1 year)
+- **Classification**: Actual findings (↑30%), expired (↓70%), test (↓80%)
+
+### **Finding Classification: Actual / Expired / Test / Unknown**
+Automatic categorization of each finding with confidence scoring:
+
+**Categories:**
+- **`actual`**: Confirmed valid credentials (high risk)
+- **`expired`**: Expired or revoked credentials (lower risk)  
+- **`test`**: Test/mock/sample credentials (very low risk)
+- **`unknown`**: Classification uncertain (default risk)
+
+**Classification Rules:**
+- **Offline Expiry**: JWT `exp` field, Azure SAS `se` parameter → `expired` 
+- **Test Markers**: Paths (`tests/`, `examples/`), filenames (`*_test.py`), content (`TEST`, `SAMPLE`) → `test`
+- **Validator Signals**: Live validation results → `actual` (confirmed) or `expired` (invalid)
+- **Entropy Heuristics**: Low entropy patterns → `test` (low confidence)
+
+**Usage Examples:**
+```bash
+# Show all findings with categories
+ss360 scan . --json-out findings.json
+
+# Only show actual findings (for security review)
+ss360 scan . --only-category actual
+
+# Only show test findings (for cleanup)
+ss360 scan . --only-category test
+```
 
 ### **Autofix & Rotation**
 Safe automated remediation with:
@@ -59,8 +87,15 @@ validators:
   global_qps: 2.0       # Global rate limit (queries per second)
 
 budgets:
-  new_findings: 0       # Fail if any new findings (strict mode)
-  max_risk_score: 40    # Fail if any finding exceeds this risk score
+  # Category-based enforcement (recommended)
+  new_actual_findings: 0     # Fail CI on real secrets
+  new_expired_findings: 999  # Allow expired (lower risk)
+  new_test_findings: 999     # Allow test/sample credentials  
+  new_unknown_findings: 5    # Limit unclassified findings
+  
+  # Legacy budget (backward compatibility)
+  new_findings: 20           # Total findings limit
+  max_risk_score: 40         # Risk score threshold
 
 autofix:
   min_risk_score: 60    # Only autofix findings with risk >= 60
@@ -86,6 +121,11 @@ ss360 scan src/ --policy my-policy.yml
 # Different output formats
 ss360 scan . --format json --json-out results.json
 ss360 scan . --format sarif --sarif-out results.sarif
+
+# Filter by finding category
+ss360 scan . --only-category actual    # Only real secrets
+ss360 scan . --only-category test      # Only test/sample data
+ss360 scan . --only-category expired   # Only expired credentials
 ```
 
 ### Autofix Operations
