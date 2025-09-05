@@ -65,19 +65,19 @@ def main(argv=None):
     # Add org command with subcommands
     org_parser = sub.add_parser("org", help="organization-level operations")
     org_sub = org_parser.add_subparsers(dest="org_cmd")
-    
+
     agg_parser = org_sub.add_parser("aggregate", help="aggregate SARIF across repos")
     agg_parser.add_argument(
         "--in",
         dest="input_dir",
         default=".artifacts/org",
-        help="input directory containing repo SARIF files (default: .artifacts/org)"
+        help="input directory containing repo SARIF files (default: .artifacts/org)",
     )
     agg_parser.add_argument(
         "--out",
         dest="output_dir",
         default=".artifacts",
-        help="output directory for summary files (default: .artifacts)"
+        help="output directory for summary files (default: .artifacts)",
     )
 
     args = p.parse_args(argv)
@@ -111,8 +111,10 @@ def main(argv=None):
             cmd = [
                 sys.executable,
                 str(tools_dir / "sarif_aggregate.py"),
-                "--in", args.input_dir,
-                "--out", args.output_dir,
+                "--in",
+                args.input_dir,
+                "--out",
+                args.output_dir,
             ]
             return subprocess.call(cmd)
 
