@@ -41,6 +41,16 @@ DEFAULT_EXCLUDES = [
     "*/tests/**/*",
     "*/services/agents/app/config/detectors.yaml",
     "*/detectors/*",
+    # Exclude validator core files and policy configs
+    "*/src/ss360/validate/**/*",
+    "*/src/ss360/policy/**/*", 
+    "**/policy.example.yml",
+    "**/policy.yml",
+    # Exclude any test fixtures or example files
+    "**/test_*.py",
+    "**/example_*.py",
+    "**/fixtures/**/*",
+    "**/examples/**/*",
 ]
 
 
