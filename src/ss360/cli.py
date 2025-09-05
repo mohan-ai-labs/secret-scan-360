@@ -23,7 +23,9 @@ from . import __version__
 def main(argv=None):
     argv = argv or sys.argv[1:]
     p = argparse.ArgumentParser(prog="ss360", description="Secret Scan 360")
-    p.add_argument("-v", "--version", action="store_true", help="print version and exit")
+    p.add_argument(
+        "-v", "--version", action="store_true", help="print version and exit"
+    )
 
     sub = p.add_subparsers(dest="cmd")
     sub.add_parser("version", help="print version")

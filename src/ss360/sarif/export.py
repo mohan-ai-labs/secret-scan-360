@@ -38,7 +38,7 @@ def build_sarif(report: Dict[str, Any]) -> Dict[str, Any]:
         except Exception:
             p_rel = path
         level = "error" if bool(f.get("is_secret", True)) else "warning"
-        
+
         # Build result object with classification data
         result = {
             "ruleId": k,
@@ -54,19 +54,19 @@ def build_sarif(report: Dict[str, Any]) -> Dict[str, Any]:
                 }
             ],
         }
-        
+
         # Add classification properties if available
         if "category" in f or "confidence" in f or "reasons" in f:
             properties = {}
             if "category" in f:
                 properties["category"] = f["category"]
             if "confidence" in f:
-                properties["confidence"] = f["confidence"]  
+                properties["confidence"] = f["confidence"]
             if "reasons" in f:
                 properties["reasons"] = f["reasons"]
-            
+
             result["properties"] = properties
-        
+
         results.append(result)
 
     # Make this upload unique per job by setting automationDetails.id
