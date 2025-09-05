@@ -4,8 +4,6 @@ Autofix planning - generates remediation plans for security findings.
 """
 from __future__ import annotations
 
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass
 from enum import Enum
 
 
