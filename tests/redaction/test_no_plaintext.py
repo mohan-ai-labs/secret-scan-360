@@ -78,12 +78,17 @@ class TestSecretRedaction:
 
         results = run_validators(finding, config)
 
-        assert len(results) == 1
-        result = results[0]
-
-        # Evidence should be redacted
-        assert webhook_url not in result.evidence
-        assert "****5678" in result.evidence
+        # Should have 4 results (2 Slack validators + 2 network validators skipped)
+        assert len(results) == 4
+        
+        # Check that Slack validators have redacted evidence
+        slack_results = [r for r in results if "slack_webhook" in r.validator_name and r.evidence]
+        assert len(slack_results) == 2
+        
+        for result in slack_results:
+            # Evidence should be redacted
+            assert webhook_url not in result.evidence
+            assert "****5678" in result.evidence
 
     def test_no_secrets_in_logs(self):
         """Test that validator names and reasons don't contain secrets."""

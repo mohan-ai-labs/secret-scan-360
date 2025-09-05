@@ -119,9 +119,17 @@ SS360 includes a pluggable validation system that can verify candidate findings 
 
 ### Built-in Validators
 
+#### Local Validators (No Network Required)
+- **Slack Webhook Format Validator**: Validates Slack webhook URL format (original, basic format check)
+- **Slack Webhook Local Validator**: Enhanced local Slack webhook validation with component validation (team ID, channel ID, token format)
+
+#### Network Validators (Require `allow_network: true`)
 - **GitHub PAT Live Validator**: Validates GitHub tokens via API (`/user` endpoint)
 - **AWS Access Key Live Validator**: Validates AWS keys via STS (format validation + future STS integration)
-- **Slack Webhook Format Validator**: Validates Slack webhook URL format (local, no network required)
+- **GCP Service Account Key Live Validator**: Validates GCP service account keys via IAM Credentials API (`generateAccessToken`)
+- **Azure SAS Live Validator**: Validates Azure SAS tokens via HEAD request to test accessibility
+
+> **⚠️ Safety Note**: Network validators are disabled by default (`allow_network: false`) to ensure CI safety. Enable only in trusted environments for live credential validation.
 
 ### Validation Results
 
@@ -140,14 +148,57 @@ Example output:
       "0": [
         {
           "state": "valid",
-          "evidence": "Valid GitHub token for user: ****user",
-          "reason": "Token successfully authenticated with GitHub API",
-          "validator_name": "github_pat_live"
+          "evidence": "Valid Slack webhook format with enhanced checks: ****5678",
+          "reason": "Passed Slack webhook URL pattern and component validation",
+          "validator_name": "slack_webhook_local"
+        },
+        {
+          "state": "indeterminate",
+          "evidence": "GCP service account key format valid: ****.com",
+          "reason": "Format validation passed, but live validation requires full OAuth2 implementation", 
+          "validator_name": "gcp_sa_key_live"
+        },
+        {
+          "state": "indeterminate",
+          "evidence": null,
+          "reason": "Network disabled - validator skipped",
+          "validator_name": "azure_sas_live"
         }
       ]
     }
   }
 }
+```
+
+#### Validator-Specific Examples
+
+**Slack Webhook Validation**:
+```bash
+# Local validation (always runs)
+Finding: https://hooks.slack.com/services/T12345678/B12345678/abcd1234...
+Result: "valid" with enhanced component validation
+
+# Both slack_webhook_format and slack_webhook_local will validate this
+```
+
+**GCP Service Account Key**:
+```bash  
+# With network disabled (default)
+Finding: {"type": "service_account", "client_email": "...@project.iam.gserviceaccount.com", ...}
+Result: "indeterminate" - format validated, live check skipped
+
+# With allow_network: true
+Result: "indeterminate" - format validated, but full OAuth2 flow not implemented
+```
+
+**Azure SAS Token**:
+```bash
+# With network disabled (default)  
+Finding: https://storage.blob.core.windows.net/container?sv=2020-08-04&se=...&sig=...
+Result: "indeterminate" - format validated, HEAD request skipped
+
+# With allow_network: true
+Result: "indeterminate" - format validated, HEAD request would be attempted
 ```
 
 ### Security Guarantees

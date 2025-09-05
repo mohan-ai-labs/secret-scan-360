@@ -255,4 +255,20 @@ def _get_default_registry() -> ValidatorRegistry:
     """Get the default validator registry with built-in validators."""
     registry = ValidatorRegistry()
     registry.register(SlackWebhookValidator())
+
+    # Import and register additional validators
+    try:
+        from .additional_validators import (
+            SlackWebhookLocalValidator,
+            GCPServiceAccountKeyLiveValidator,
+            AzureSASLiveValidator,
+        )
+
+        registry.register(SlackWebhookLocalValidator())
+        registry.register(GCPServiceAccountKeyLiveValidator())
+        registry.register(AzureSASLiveValidator())
+    except ImportError:
+        # Additional validators not available, continue with defaults
+        pass
+
     return registry
