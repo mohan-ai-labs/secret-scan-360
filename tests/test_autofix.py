@@ -2,7 +2,9 @@
 """
 Tests for autofix framework.
 """
-import pytest
+import json
+from pathlib import Path
+from unittest.mock import Mock, patch
 from ss360.autofix.planner import AutofixPlanner, ActionType, PlanItem
 from ss360.autofix.apply import AutofixApplier
 

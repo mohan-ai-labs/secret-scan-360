@@ -4,140 +4,116 @@ AWS provider for access key deactivation.
 """
 from __future__ import annotations
 
+import json
+import subprocess
 from typing import Optional, Dict, Any
 
 
-def deactivate_access_key(access_key_id: str, username: Optional[str] = None) -> bool:
+def deactivate_access_key(access_key_id: str) -> bool:
     """
     Deactivate an AWS Access Key.
-    
+
     Args:
         access_key_id: The AWS Access Key ID to deactivate
-        username: Optional IAM username (if not current user)
-        
+
     Returns:
         True if deactivation succeeded, False otherwise
     """
     if not access_key_id or not access_key_id.startswith("AKIA"):
         return False
-    
+
     try:
-        # In a real implementation, you'd use boto3:
-        # import boto3
-        # iam = boto3.client('iam')
-        # if username:
-        #     iam.update_access_key(
-        #         UserName=username,
-        #         AccessKeyId=access_key_id,
-        #         Status='Inactive'
-        #     )
-        # else:
-        #     iam.update_access_key(
-        #         AccessKeyId=access_key_id,
-        #         Status='Inactive'
-        #     )
-        
-        # For now, we'll simulate the operation
+        # For now, simulate the operation
         print(f"[DRY RUN] Would deactivate AWS Access Key: ****{access_key_id[-4:]}")
         return True
-        
+
+        # Real implementation would use AWS CLI or boto3:
+        # result = subprocess.run([
+        #     "aws", "iam", "update-access-key",
+        #     "--access-key-id", access_key_id,
+        #     "--status", "Inactive"
+        # ], capture_output=True, text=True)
+        # return result.returncode == 0
+
     except Exception as e:
         print(f"Failed to deactivate AWS Access Key: {e}")
         return False
 
 
-def reactivate_access_key(access_key_id: str, username: Optional[str] = None) -> bool:
+def reactivate_access_key(access_key_id: str) -> bool:
     """
     Reactivate an AWS Access Key.
-    
+
     Args:
         access_key_id: The AWS Access Key ID to reactivate
-        username: Optional IAM username (if not current user)
-        
+
     Returns:
         True if reactivation succeeded, False otherwise
     """
     if not access_key_id or not access_key_id.startswith("AKIA"):
         return False
-    
+
     try:
-        # Boto3 implementation would be similar to deactivate_access_key
-        # but with Status='Active'
-        
-        print(f"[DRY RUN] Would reactivate AWS Access Key: ****{access_key_id[-4:]}")
-        return True
-        
+        result = subprocess.run([
+            "aws", "iam", "update-access-key",
+            "--access-key-id", access_key_id,
+            "--status", "Active"
+        ], capture_output=True, text=True)
+
+        return result.returncode == 0
+
     except Exception as e:
         print(f"Failed to reactivate AWS Access Key: {e}")
         return False
 
 
-def get_access_key_info(access_key_id: str, username: Optional[str] = None) -> Optional[Dict[str, Any]]:
+def get_access_key_info(access_key_id: str) -> Optional[Dict[str, Any]]:
     """
     Get information about an AWS Access Key.
-    
+
     Args:
         access_key_id: The AWS Access Key ID to inspect
-        username: Optional IAM username (if not current user)
-        
+
     Returns:
         Key information or None if failed
     """
     try:
-        # In a real implementation:
-        # import boto3
-        # iam = boto3.client('iam')
-        # if username:
-        #     response = iam.list_access_keys(UserName=username)
-        # else:
-        #     response = iam.list_access_keys()
-        # 
-        # for key in response['AccessKeyMetadata']:
-        #     if key['AccessKeyId'] == access_key_id:
-        #         return {
-        #             'AccessKeyId': key['AccessKeyId'],
-        #             'Status': key['Status'],
-        #             'CreateDate': key['CreateDate'],
-        #             'UserName': key['UserName']
-        #         }
-        
-        # Placeholder implementation
-        return {
-            "AccessKeyId": access_key_id,
-            "Status": "Active",  # Assume active unless proven otherwise
-            "UserName": username or "current-user",
-        }
-        
+        result = subprocess.run([
+            "aws", "iam", "get-access-key-last-used",
+            "--access-key-id", access_key_id
+        ], capture_output=True, text=True)
+
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+            return data.get("AccessKeyLastUsed", {})
+
     except Exception:
         pass
-    
+
     return None
 
 
-def create_secrets_manager_secret(secret_data: Dict[str, str], secret_name: str) -> bool:
+def list_user_access_keys(username: str) -> list:
     """
-    Create a secret in AWS Secrets Manager.
-    
+    List all access keys for a given IAM user.
+
     Args:
-        secret_data: Dictionary containing the secret data
-        secret_name: Name for the secret
-        
+        username: The IAM username
+
     Returns:
-        True if creation succeeded, False otherwise
+        List of access key information
     """
     try:
-        # In a real implementation:
-        # import boto3
-        # secrets_client = boto3.client('secretsmanager')
-        # secrets_client.create_secret(
-        #     Name=secret_name,
-        #     SecretString=json.dumps(secret_data),
-        #     Description='Secret created by SS360 autofix'
-        # )
-        
-        print(f"[DRY RUN] Would create Secrets Manager secret: {secret_name}")
-        return True
-        
-    except Exception as e:
-        print(f"Failed to create Secrets Manager secret: {e}")
-        return False
+        result = subprocess.run([
+            "aws", "iam", "list-access-keys",
+            "--user-name", username
+        ], capture_output=True, text=True)
+
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+            return data.get("AccessKeyMetadata", [])
+
+    except Exception:
+        pass
+
+    return []

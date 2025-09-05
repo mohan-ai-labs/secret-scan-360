@@ -13,7 +13,6 @@ Note:
 import argparse
 import sys
 import json
-import subprocess
 from pathlib import Path
 from . import __version__
 
@@ -54,13 +53,13 @@ def main(argv=None):
         help="write JSON results to file"
     )
     sp.add_argument(
-        "--sarif-out", 
+        "--sarif-out",
         dest="sarif_out",
         help="write SARIF results to file"
     )
 
     args = p.parse_args(argv)
-    
+
     if args.version or args.cmd == "version":
         print(__version__)
         return 0
@@ -83,7 +82,7 @@ def handle_scan_command(args):
     from .risk.score import calculate_risk_score, risk_summary
     from .autofix.planner import AutofixPlanner, format_plan_for_display
     from .autofix.apply import AutofixApplier
-    
+
     # Load policy configuration
     if args.policy:
         try:
@@ -95,45 +94,45 @@ def handle_scan_command(args):
         policy_config = get_default_policy_config()
         if args.format == "text":
             print("Using default policy (no --policy specified)")
-    
+
     # Initialize detector registry with our detectors
     detector_registry = DetectorRegistry()
-    
+
     # Import and register our detectors
     import detectors.github_pat as github_pat_detector
     import detectors.aws_keypair as aws_keypair_detector
-    
+
     # Create simple detector wrapper
     class SimpleDetector:
         def __init__(self, name, detector_id, detect_func):
             self.name = name
             self.detector_id = detector_id
             self.detect_func = detect_func
-        
+
         def detect(self, path: str, text: str):
             lines = text.splitlines()
             for finding in self.detect_func(lines):
                 finding["path"] = path
                 finding["kind"] = self.detector_id  # Use detector_id as kind
                 yield finding
-    
+
     # Register our detectors
     github_detector = SimpleDetector("github_pat", "github_pat", github_pat_detector.detect)
     aws_detector = SimpleDetector("aws_keypair", "aws_keypair", aws_keypair_detector.detect)
-    
+
     detector_registry.register(github_detector)
     detector_registry.register(aws_detector)
-    
+
     # Initialize scanner
     scanner = Scanner(registry=detector_registry)
-    
+
     # Perform scan
     try:
         findings = scanner.scan_paths([args.root])
     except Exception as e:
         print(f"Error during scan: {e}", file=sys.stderr)
         return 1
-    
+
     # Convert findings to our expected format
     normalized_findings = []
     for finding in findings:
@@ -147,18 +146,18 @@ def handle_scan_command(args):
             "description": f"{finding.get('kind', 'Unknown')} detected",
         }
         normalized_findings.append(normalized_finding)
-    
+
     # Build scan results
     scan_results = {
         "total": len(normalized_findings),
         "findings": normalized_findings
     }
-    
+
     # Set up validator registry
     validator_registry = ValidatorRegistry()
     validator_registry.register(GitHubPATLiveValidator())
     validator_registry.register(AWSAccessKeyLiveValidator())
-    
+
     # Run validation for each finding
     validation_results = {}
     for i, finding in enumerate(normalized_findings):
@@ -172,18 +171,18 @@ def handle_scan_command(args):
             }
             for r in results
         ]
-        
+
         # Calculate risk score
         risk_score = calculate_risk_score(finding, [r.__dict__ for r in results])
         finding["risk_score"] = risk_score
         finding["risk_summary"] = risk_summary(finding, [r.__dict__ for r in results])
-    
+
     # Add validation results to scan results
     scan_results["validators"] = {
         "enabled": True,
         "results": validation_results
     }
-    
+
     # Enforce policy
     policy_result = enforce_policy(policy_config, normalized_findings, validation_results)
     scan_results["policy"] = {
@@ -200,14 +199,14 @@ def handle_scan_command(args):
         ],
         "summary": policy_result.summary
     }
-    
+
     # Handle autofix
     if args.autofix:
         planner = AutofixPlanner()
         # Extract autofix config
         autofix_config = policy_config.get("autofix", {})
         plan_items = planner.generate_plan(normalized_findings, autofix_config)
-        
+
         if args.autofix == "plan":
             plan_display = format_plan_for_display(plan_items)
             if args.format == "text":
@@ -225,22 +224,22 @@ def handle_scan_command(args):
                 }
                 for item in plan_items
             ]
-        
+
         elif args.autofix == "apply":
             if not args.i_know_what_im_doing:
                 print("ERROR: --autofix apply requires --i-know-what-im-doing flag", file=sys.stderr)
                 return 1
-            
+
             applier = AutofixApplier(dry_run=False)
             apply_result = applier.apply_plan(plan_items, confirmation_required=True)
             scan_results["autofix_result"] = apply_result
-            
+
             if args.format == "text":
                 print(f"\nAutofix completed: {apply_result['status']}")
                 if apply_result.get("pull_request"):
                     pr_info = apply_result["pull_request"]
                     print(f"Pull request: {pr_info.get('pr_url', pr_info.get('branch'))}")
-    
+
     # Output results
     if args.format == "json" or args.json_out:
         json_output = json.dumps(scan_results, indent=2, default=str)
@@ -250,7 +249,7 @@ def handle_scan_command(args):
                 print(f"JSON output written to {args.json_out}")
         if args.format == "json":
             print(json_output)
-    
+
     elif args.format == "sarif" or args.sarif_out:
         sarif_output = convert_to_sarif(scan_results)
         sarif_json = json.dumps(sarif_output, indent=2)
@@ -260,21 +259,21 @@ def handle_scan_command(args):
                 print(f"SARIF output written to {args.sarif_out}")
         if args.format == "sarif":
             print(sarif_json)
-    
+
     elif args.format == "text":
         print_text_summary(scan_results, policy_result)
-    
+
     # Exit with appropriate code
     if not policy_result.passed:
         return 1
-    
+
     return 0
 
 
 def convert_to_sarif(scan_results):
     """Convert scan results to SARIF format."""
     findings = scan_results.get("findings", [])
-    
+
     sarif = {
         "version": "2.1.0",
         "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/cos02/schemas/sarif-schema-2.1.0.json",
@@ -292,11 +291,11 @@ def convert_to_sarif(scan_results):
             }
         ]
     }
-    
+
     # Extract unique rules from findings
     rules_seen = set()
     run = sarif["runs"][0]
-    
+
     for finding in findings:
         rule_id = finding.get("id", "unknown")
         if rule_id not in rules_seen:
@@ -312,7 +311,7 @@ def convert_to_sarif(scan_results):
             }
             run["tool"]["driver"]["rules"].append(rule)
             rules_seen.add(rule_id)
-        
+
         # Create result
         result = {
             "ruleId": rule_id,
@@ -333,16 +332,16 @@ def convert_to_sarif(scan_results):
                 }
             ]
         }
-        
+
         # Add risk information as properties
         if "risk_score" in finding:
             result["properties"] = {
                 "risk_score": finding["risk_score"],
                 "risk_level": finding.get("risk_summary", {}).get("level", "unknown")
             }
-        
+
         run["results"].append(result)
-    
+
     return sarif
 
 
@@ -351,31 +350,31 @@ def print_text_summary(scan_results, policy_result):
     findings = scan_results.get("findings", [])
     validators_info = scan_results.get("validators", {})
     policy_info = scan_results.get("policy", {})
-    
-    print(f"\n🔍 SS360 Scan Results")
-    print(f"{'=' * 50}")
-    
+
+    print("\n🔍 SS360 Scan Results")
+    print("=" * 50)
+
     print(f"Total findings: {len(findings)}")
-    
+
     if findings:
-        print(f"\nFindings by type:")
+        print("\nFindings by type:")
         finding_counts = {}
         for finding in findings:
             finding_type = finding.get("id", "unknown")
             finding_counts[finding_type] = finding_counts.get(finding_type, 0) + 1
-        
+
         for finding_type, count in finding_counts.items():
             print(f"  {finding_type}: {count}")
-        
-        print(f"\nHigh-risk findings:")
+
+        print("\nHigh-risk findings:")
         high_risk_count = sum(1 for f in findings if f.get("risk_score", 0) >= 60)
         print(f"  Count: {high_risk_count}")
-    
+
     # Validator summary
     if validators_info.get("enabled"):
-        print(f"\n🔬 Validation Summary")
+        print("\n🔬 Validation Summary")
         validation_results = validators_info.get("results", {})
-        
+
         total_validations = sum(len(results) for results in validation_results.values())
         if total_validations > 0:
             valid_count = sum(
@@ -385,9 +384,9 @@ def print_text_summary(scan_results, policy_result):
             )
             print(f"  Total validations: {total_validations}")
             print(f"  Confirmed valid: {valid_count}")
-    
-    # Policy summary  
-    print(f"\n📋 Policy Enforcement")
+
+    # Policy summary
+    print("\n📋 Policy Enforcement")
     if policy_info.get("passed"):
         print("  Status: ✅ PASSED")
     else:

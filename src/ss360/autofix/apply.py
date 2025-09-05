@@ -4,9 +4,7 @@ Autofix plan execution - applies remediation plans.
 """
 from __future__ import annotations
 
-import os
 import subprocess
-import tempfile
 from typing import Dict, Any, List
 from pathlib import Path
 
@@ -15,11 +13,11 @@ from .planner import PlanItem, ActionType
 
 class AutofixApplier:
     """Applies autofix plans to remediate security findings."""
-    
+
     def __init__(self, dry_run: bool = True):
         self.dry_run = dry_run
         self.applied_actions = []
-    
+
     def apply_plan(
         self,
         plan_items: List[PlanItem],
@@ -27,25 +25,25 @@ class AutofixApplier:
     ) -> Dict[str, Any]:
         """
         Apply the autofix plan.
-        
+
         Args:
             plan_items: List of planned actions
             confirmation_required: If True, require explicit confirmation
-            
+
         Returns:
             Dictionary with execution results
         """
         if confirmation_required and not self.dry_run:
             if not self._confirm_dangerous_actions(plan_items):
                 return {"status": "cancelled", "reason": "User cancelled operation"}
-        
+
         results = {
             "status": "success",
             "applied": [],
             "failed": [],
             "skipped": []
         }
-        
+
         for item in plan_items:
             try:
                 if item.action == ActionType.REMOVE_LITERAL:
@@ -66,14 +64,14 @@ class AutofixApplier:
                     "item": item.description,
                     "error": str(e)
                 })
-        
+
         # Open PR if any file changes were made
         if results["applied"] and not self.dry_run:
             pr_result = self._create_pull_request(results["applied"])
             results["pull_request"] = pr_result
-        
+
         return results
-    
+
     def _apply_remove_literal(self, item: PlanItem, results: Dict[str, Any]):
         """Remove literal secret from file."""
         if self.dry_run:
@@ -84,34 +82,34 @@ class AutofixApplier:
                 "dry_run": True
             })
             return
-        
+
         # Read file
         file_path = Path(item.path)
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {item.path}")
-        
+
         lines = file_path.read_text().splitlines()
-        
+
         # Replace the line
         if 0 <= item.line - 1 < len(lines):
             original_line = lines[item.line - 1]
             lines[item.line - 1] = original_line.replace(item.original_value, item.replacement)
-            
+
             # Write back
             file_path.write_text("\n".join(lines) + "\n")
-            
+
             results["applied"].append({
                 "action": "remove_literal",
                 "file": item.path,
                 "line": item.line,
                 "replacement": item.replacement
             })
-    
+
     def _apply_replace_with_secret_ref(self, item: PlanItem, results: Dict[str, Any]):
         """Replace literal with secret manager reference."""
         # Same as remove_literal for now
         self._apply_remove_literal(item, results)
-    
+
     def _apply_revoke_token(self, item: PlanItem, results: Dict[str, Any]):
         """Revoke GitHub token via API."""
         if self.dry_run:
@@ -122,7 +120,7 @@ class AutofixApplier:
                 "dry_run": True
             })
             return
-        
+
         # Import provider and revoke
         if item.provider == "github":
             from .providers.github import revoke_pat
@@ -135,7 +133,7 @@ class AutofixApplier:
                 })
             else:
                 raise Exception("Failed to revoke GitHub PAT")
-    
+
     def _apply_deactivate_key(self, item: PlanItem, results: Dict[str, Any]):
         """Deactivate AWS access key."""
         if self.dry_run:
@@ -146,7 +144,7 @@ class AutofixApplier:
                 "dry_run": True
             })
             return
-        
+
         # Import provider and deactivate
         if item.provider == "aws":
             from .providers.aws import deactivate_access_key
@@ -159,49 +157,49 @@ class AutofixApplier:
                 })
             else:
                 raise Exception("Failed to deactivate AWS Access Key")
-    
+
     def _confirm_dangerous_actions(self, plan_items: List[PlanItem]) -> bool:
         """Confirm dangerous actions with user."""
         dangerous_actions = [
-            item for item in plan_items 
+            item for item in plan_items
             if not item.reversible
         ]
-        
+
         if not dangerous_actions:
             return True
-        
+
         print("WARNING: The following actions cannot be reversed:")
         for item in dangerous_actions:
             print(f"  - {item.description}")
-        
+
         response = input("\nContinue? (yes/no): ").lower().strip()
         return response in ("yes", "y")
-    
+
     def _create_pull_request(self, applied_actions: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Create a pull request with the autofix changes."""
         try:
             # Create branch
             branch_name = "autofix/secret-remediation"
             subprocess.run(["git", "checkout", "-b", branch_name], check=True)
-            
+
             # Commit changes
             subprocess.run(["git", "add", "."], check=True)
-            
+
             commit_msg = "🔒 Autofix: Remove exposed secrets\n\nActions taken:\n"
             for action in applied_actions:
                 if action.get("action") == "remove_literal":
                     commit_msg += f"- Replaced secret in {action['file']}:{action['line']}\n"
                 elif action.get("action") == "revoke_token":
                     commit_msg += f"- Revoked {action['provider']} token {action['token_hint']}\n"
-            
+
             subprocess.run(["git", "commit", "-m", commit_msg], check=True)
-            
+
             # Create PR body
             pr_body = self._generate_pr_body(applied_actions)
-            
+
             # Push and create PR
             subprocess.run(["git", "push", "-u", "origin", branch_name], check=True)
-            
+
             # Use gh CLI if available
             try:
                 result = subprocess.run([
@@ -209,7 +207,7 @@ class AutofixApplier:
                     "--title", "🔒 Autofix: Remove exposed secrets",
                     "--body", pr_body
                 ], capture_output=True, text=True, check=True)
-                
+
                 return {
                     "status": "success",
                     "branch": branch_name,
@@ -221,13 +219,13 @@ class AutofixApplier:
                     "branch": branch_name,
                     "message": "Branch created, but PR creation failed. Create manually."
                 }
-                
+
         except subprocess.CalledProcessError as e:
             return {
                 "status": "failed",
                 "error": str(e)
             }
-    
+
     def _generate_pr_body(self, applied_actions: List[Dict[str, Any]]) -> str:
         """Generate PR body with remediation checklist."""
         body = """## Secret Remediation Checklist
@@ -236,13 +234,13 @@ This PR automatically removes exposed secrets found by SS360.
 
 ### Actions Taken
 """
-        
+
         for action in applied_actions:
             if action.get("action") == "remove_literal":
                 body += f"- [x] Replaced secret in `{action['file']}:{action['line']}`\n"
             elif action.get("action") == "revoke_token":
                 body += f"- [x] Revoked {action['provider']} token `{action['token_hint']}`\n"
-        
+
         body += """
 ### Manual Steps Required
 - [ ] Verify that the application still works with the secret references

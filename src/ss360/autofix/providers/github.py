@@ -13,27 +13,25 @@ from typing import Optional
 def revoke_pat(token: str) -> bool:
     """
     Revoke a GitHub Personal Access Token.
-    
+
     Args:
         token: The GitHub PAT to revoke
-        
+
     Returns:
         True if revocation succeeded, False otherwise
     """
     if not token or not token.startswith(("ghp_", "github_pat_", "ghs_", "gho_")):
         return False
-    
+
     try:
         # GitHub API endpoint to revoke current token
-        url = f"https://api.github.com/applications/{_get_client_id(token)}/token"
-        
         # This is a simplified implementation - in practice you'd need
         # the OAuth app credentials to revoke tokens
         # For now, we'll simulate the operation
-        
+
         print(f"[DRY RUN] Would revoke GitHub PAT: ****{token[-4:]}")
         return True
-        
+
     except Exception as e:
         print(f"Failed to revoke GitHub PAT: {e}")
         return False
@@ -49,10 +47,10 @@ def _get_client_id(token: str) -> str:
 def get_token_info(token: str) -> Optional[dict]:
     """
     Get information about a GitHub PAT.
-    
+
     Args:
         token: The GitHub PAT to inspect
-        
+
     Returns:
         Token information or None if failed
     """
@@ -62,7 +60,7 @@ def get_token_info(token: str) -> Optional[dict]:
             "Authorization": f"token {token}",
             "User-Agent": "SS360-Validator/1.0",
         }
-        
+
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=10) as response:
             if response.status == 200:
@@ -74,5 +72,5 @@ def get_token_info(token: str) -> Optional[dict]:
                 }
     except Exception:
         pass
-    
-    return None
+
+    return
