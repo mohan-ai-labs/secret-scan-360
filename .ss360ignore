@@ -1,0 +1,4 @@
+# synthetic and test artifacts
+run_tests.py
+tests/**
+examples/**

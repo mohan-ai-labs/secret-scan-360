@@ -18,11 +18,11 @@ jobs:
         run: black .
       - name: Flake8 (lint)
         run: flake8 .
-      - name: SS360 scan with policy gate
+      - name: Run SS360 scan (PR)
         if: always()
         run: |
           # Run scan with network disabled (safe for CI)
-          python -m ss360.cli scan . --policy policy.example.yml --format json --json-out findings.json --sarif-out findings.sarif
+          python -m ss360.cli scan src --policy policy.example.yml --baseline .ss360-baseline.json --format json --json-out findings.json --sarif-out findings.sarif
           echo "Scan completed with exit code: $?"
 
       - name: Upload SARIF results to GitHub Security
