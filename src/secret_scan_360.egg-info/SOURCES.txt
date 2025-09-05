@@ -26,6 +26,7 @@ src/ss360/sarif/__init__.py
 src/ss360/sarif/export.py
 src/ss360/scanner/__init__.py
 src/ss360/validate/__init__.py
+src/ss360/validate/additional_validators.py
 src/ss360/validate/core.py
 src/ss360/validate/live_validators.py
 tests/test_autofix.py
