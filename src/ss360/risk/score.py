@@ -104,6 +104,10 @@ def calculate_risk_score(
     # Historical presence modifier
     history_modifier = _get_history_modifier(finding)
     score *= history_modifier
+    
+    # Category modifier - boost actual, downrank expired/test
+    category_modifier = _get_category_modifier(finding)
+    score *= category_modifier
 
     # Clamp to 0-100 range
     return max(0, min(100, int(round(score))))
@@ -172,6 +176,22 @@ def _get_history_modifier(finding: Dict[str, Any]) -> float:
         return 1.0  # Recent or no history info
 
 
+def _get_category_modifier(finding: Dict[str, Any]) -> float:
+    """Get risk modifier based on finding category."""
+    category = finding.get("category", "unknown")
+    
+    if category == "actual":
+        return 1.3  # Boost actual findings significantly
+    elif category == "expired":
+        return 0.3  # Expired credentials are lower risk
+    elif category == "test":
+        return 0.2  # Test credentials are very low risk
+    elif category == "unknown":
+        return 1.0  # No modification for unknown
+    else:
+        return 1.0  # Default for any new categories
+
+
 def get_risk_level(score: int) -> RiskLevel:
     """Convert numeric risk score to risk level."""
     if score >= 80:
@@ -209,5 +229,6 @@ def risk_summary(
             "path_modifier": _get_path_modifier(finding.get("path", "")),
             "exposure_modifier": _get_exposure_modifier(repo_context or {}),
             "history_modifier": _get_history_modifier(finding),
+            "category_modifier": _get_category_modifier(finding),
         },
     }

@@ -223,13 +223,14 @@ def _check_validator_signals(validation_results: List[Dict[str, Any]]) -> Tuple[
     for result in validation_results:
         state = result.get("state", "")
         validator_name = result.get("validator_name", "")
-        evidence = result.get("evidence", "")
-        reason = result.get("reason", "")
+        evidence = result.get("evidence") or ""
+        reason = result.get("reason") or ""
         
         # Confirmed valid
         if state == "valid":
             # Check if validator indicated expiry
-            if any(word in (evidence + reason).lower() for word in ["expired", "invalid", "revoked"]):
+            combined_text = (evidence + " " + reason).lower()
+            if any(word in combined_text for word in ["expired", "invalid", "revoked"]):
                 reasons.append(f"validator:{validator_name}:expired")
                 return ("expired", 0.9, reasons)
             else:
@@ -238,7 +239,8 @@ def _check_validator_signals(validation_results: List[Dict[str, Any]]) -> Tuple[
         
         # Explicit invalid due to expiry
         elif state == "invalid":
-            if any(word in (evidence + reason).lower() for word in ["expired", "expiry"]):
+            combined_text = (evidence + " " + reason).lower()
+            if any(word in combined_text for word in ["expired", "expiry"]):
                 reasons.append(f"validator:{validator_name}:expired")
                 return ("expired", 0.85, reasons)
     
