@@ -43,9 +43,7 @@ DEFAULT_EXCLUDES = [
     "**/.pytest_cache/**",
     "**/__pycache__/**",
     # Project content we don't want to scan for secrets in CI
-    "docs/**",
     "/docs/",
-    "tests/**",
     "/tests/",
     "detectors/**",
     "**/detectors/**",
