@@ -9,18 +9,21 @@ from pathlib import Path
 
 def run_cli_scan(root_path, raw_mode=False, config_path=None):
     """Run ss360 scan command and return result."""
-    cmd = [
-        sys.executable, "-c",
-        """
+    # Dynamically resolve the src directory relative to this test file
+    src_dir = (Path(__file__).parent.parent.parent / "src").resolve()
+    code = f"""
 import sys
-sys.path.insert(0, '/home/runner/work/secret-scan-360/secret-scan-360/src')
+sys.path.insert(0, {repr(str(src_dir))})
 from ss360.cli import main
 try:
     exit_code = main(sys.argv[1:])
     sys.exit(exit_code)
 except SystemExit:
     raise
-""",
+"""
+    cmd = [
+        sys.executable, "-c",
+        code,
         "scan", str(root_path)
     ]
     
