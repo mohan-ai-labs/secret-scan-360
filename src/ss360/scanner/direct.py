@@ -195,6 +195,15 @@ def _enhance_findings(findings: List[Dict[str, Any]]) -> tuple[List[Dict[str, An
                 "confidence": confidence,
                 "reasons": reasons
             })
+            
+            # Remove full secrets from meta to ensure they don't appear in output
+            if "meta" in enhanced_finding:
+                meta = enhanced_finding["meta"].copy()
+                # Remove full token/URL fields that contain unredacted secrets
+                meta.pop("full_token", None)
+                meta.pop("full_url", None)
+                enhanced_finding["meta"] = meta
+            
             enhanced.append(enhanced_finding)
             validation_results[str(i)] = []
             
@@ -206,6 +215,15 @@ def _enhance_findings(findings: List[Dict[str, Any]]) -> tuple[List[Dict[str, An
                 "confidence": 0.1,
                 "reasons": [f"classification_error:{str(e)}"]
             })
+            
+            # Remove full secrets from meta to ensure they don't appear in output
+            if "meta" in enhanced_finding:
+                meta = enhanced_finding["meta"].copy()
+                # Remove full token/URL fields that contain unredacted secrets
+                meta.pop("full_token", None)
+                meta.pop("full_url", None)
+                enhanced_finding["meta"] = meta
+            
             enhanced.append(enhanced_finding)
             validation_results[str(i)] = []
     
