@@ -103,6 +103,7 @@ def _iter_scannable_files(
 def scan_with_policy_and_classification(
     root_path: str,
     policy_path: Optional[str] = None,
+    scanner_config_path: Optional[str] = None,
     include_patterns: Optional[List[str]] = None,
     exclude_patterns: Optional[List[str]] = None,
     only_category: Optional[str] = None,
@@ -118,48 +119,75 @@ def scan_with_policy_and_classification(
         # Raw mode: scan the path directly without git-based filtering
         findings = scan_direct(root_path, include_patterns, exclude_patterns)
     else:
-        # Git mode: use the existing Scanner (legacy behavior)
+        # Git mode: use scanner configuration with proper search order
         try:
-            from ss360.scanner import Scanner
+            from ss360.scanner.config import load_scanner_config
             from ss360.core.exceptions import SS360ConfigError
             
-            config_path = "services/agents/app/config/detectors.yaml"
+            # Load scanner configuration following search order
+            scanner_config = load_scanner_config(scanner_config_path, root_path)
             
-            if not Path(config_path).exists():
-                # Fallback to direct scanning if config missing
-                print(f"[ss360] Config not found, using direct scanning: {Path(config_path).resolve()}")
-                findings = scan_direct(root_path, include_patterns, exclude_patterns)
-            else:
-                try:
-                    scanner = Scanner.from_config(config_path)
-                    if scanner is None:
-                        raise SS360ConfigError(
-                            "Failed to create scanner from config", 
-                            config_path=str(Path(config_path).resolve())
-                        )
-                    
-                    exclude_globs = [
-                        "**/.git/**", "**/.svn/**", "**/.hg/**", "**/.venv/**", "**/venv/**",
-                        "**/node_modules/**", "**/dist/**", "**/build/**", "**/.pytest_cache/**",
-                        "**/__pycache__/**", "docs/**", "**/docs/**", "tests/**", "**/tests/**",
-                        "detectors/**", "**/detectors/**",
-                    ]
-                    if exclude_patterns:
-                        exclude_globs.extend(exclude_patterns)
+            # Try to use legacy Scanner if available, otherwise use direct scanning with config
+            try:
+                from ss360.scanner import Scanner
+                
+                if Scanner is not None:
+                    try:
+                        # Create scanner using the default config path as fallback
+                        # Look for legacy detectors.yaml but don't require it
+                        legacy_config_path = "services/agents/app/config/detectors.yaml"
+                        if Path(legacy_config_path).exists():
+                            scanner = Scanner.from_config(legacy_config_path)
+                        else:
+                            # Create scanner with built-in registry if no legacy config
+                            from services.agents.app.detectors.registry import build_registry
+                            registry = build_registry(None)  # Uses built-in defaults
+                            scanner = Scanner(registry=registry)
                         
-                    findings = scanner.scan_paths(
-                        [Path(root_path)],
-                        include_globs=include_patterns or ["**/*"],
-                        exclude_globs=exclude_globs,
-                        max_bytes=1_000_000,
+                        if scanner is None:
+                            raise SS360ConfigError(
+                                "Failed to create scanner from config", 
+                                config_path=scanner_config_path
+                            )
+                        
+                        # Use exclude patterns from scanner config
+                        exclude_globs = scanner_config.get("exclude_globs", [])
+                        if exclude_patterns:
+                            exclude_globs.extend(exclude_patterns)
+                            
+                        include_globs = include_patterns or scanner_config.get("include_globs", ["**/*"])
+                            
+                        findings = scanner.scan_paths(
+                            [Path(root_path)],
+                            include_globs=include_globs,
+                            exclude_globs=exclude_globs,
+                            max_bytes=1_000_000,
+                        )
+                    except (ImportError, AttributeError) as e:
+                        print(f"[ss360] Legacy scanner failed, using direct scanning: {e}")
+                        # Fallback to direct scanning with config
+                        findings = scan_direct(
+                            root_path, 
+                            include_patterns or scanner_config.get("include_globs"), 
+                            exclude_patterns or scanner_config.get("exclude_globs")
+                        )
+                else:
+                    # Scanner not available, use direct scanning with config
+                    findings = scan_direct(
+                        root_path, 
+                        include_patterns or scanner_config.get("include_globs"), 
+                        exclude_patterns or scanner_config.get("exclude_globs")
                     )
-                except Exception as e:
-                    raise SS360ConfigError(
-                        f"Failed to load scanner config: {e}",
-                        config_path=str(Path(config_path).resolve())
-                    )
+            except ImportError:
+                # Scanner import failed, use direct scanning with config
+                findings = scan_direct(
+                    root_path, 
+                    include_patterns or scanner_config.get("include_globs"), 
+                    exclude_patterns or scanner_config.get("exclude_globs")
+                )
         except ImportError:
-            # Fallback to direct scanning if legacy scanner unavailable
+            # Fallback to direct scanning if scanner config unavailable
+            print("[ss360] Using default scanner config")
             findings = scan_direct(root_path, include_patterns, exclude_patterns)
     
     # Enhance findings with validation and classification

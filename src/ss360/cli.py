@@ -49,6 +49,7 @@ def main(argv=None):
 
     sub = p.add_subparsers(dest="cmd")
     sub.add_parser("version", help="print version")
+    sub.add_parser("init", help="create a minimal .ss360.yml config template")
 
     sp = sub.add_parser("scan", help="scan a repo/workspace")
     sp.add_argument("root", nargs="?", default=".", help="path to scan")
@@ -69,6 +70,11 @@ def main(argv=None):
         "--policy",
         dest="policy",
         help="policy file path for enforcement",
+    )
+    sp.add_argument(
+        "--config",
+        dest="config",
+        help="scanner config file path (.ss360.yml/.ss360.yaml)",
     )
     sp.add_argument(
         "--raw",
@@ -130,6 +136,20 @@ def main(argv=None):
         print(__version__)
         return 0
 
+    if args.cmd == "init":
+        # Create .ss360.yml template at repo root
+        from ss360.scanner.config import create_default_config_template
+        
+        config_file = Path(".ss360.yml")
+        if config_file.exists():
+            print(f"[ss360] Config file already exists: {config_file.resolve()}")
+            return 1
+        
+        config_content = create_default_config_template()
+        config_file.write_text(config_content)
+        print(f"[ss360] Created config template: {config_file.resolve()}")
+        return 0
+
     if args.cmd == "scan":
         # Use direct scanning instead of shelling out to ci_scan.py
         from ss360.scanner.direct import scan_with_policy_and_classification
@@ -137,15 +157,27 @@ def main(argv=None):
         from ss360.core.exceptions import SS360ConfigError
         
         try:
-            # Print absolute policy path if provided
+            # Print absolute policy path if provided, or mention when using defaults
             if args.policy:
                 policy_abs_path = Path(args.policy).resolve()
                 print(f"[ss360] Loaded policy: {policy_abs_path}")
+            else:
+                # Check if we find a policy in common locations
+                policy_paths = ["policy.yml", "policy.yaml", "policy.example.yml"]
+                found_policy = False
+                for p_path in policy_paths:
+                    if Path(p_path).exists():
+                        print(f"[ss360] Loaded policy: {Path(p_path).resolve()}")
+                        found_policy = True
+                        break
+                if not found_policy:
+                    print(f"[ss360] Using default policy config")
             
             # Perform the scan
             result = scan_with_policy_and_classification(
                 root_path=args.root,
                 policy_path=args.policy,
+                scanner_config_path=args.config,
                 only_category=args.only_category,
                 raw_mode=args.raw,
             )

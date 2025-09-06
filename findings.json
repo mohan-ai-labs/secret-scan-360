@@ -1,12 +1,12 @@
 {
-  "root": "/home/runner/work/secret-scan-360/secret-scan-360/tokens.txt",
+  "root": "/tmp/tmpklsi3f35/secrets.env",
   "total": 1,
   "findings": [
     {
       "id": "github_pat",
-      "path": "tokens.txt",
+      "path": "/tmp/tmpklsi3f35/secrets.env",
       "line": 1,
-      "match": "github...2345",
+      "match": "ghp_12...3456",
       "severity": "high",
       "meta": {},
       "category": "test",
@@ -14,7 +14,7 @@
       "reasons": [
         "entropy:sequential"
       ],
-      "risk_score": 28,
+      "risk_score": 31,
       "validated": {
         "state": "invalid",
         "evidence": null
