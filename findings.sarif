@@ -47,9 +47,9 @@
           ],
           "properties": {
             "category": "test",
-            "confidence": 0.9,
+            "confidence": 0.85,
             "reasons": [
-              "path:tests?/"
+              "filename:test"
             ]
           }
         }
