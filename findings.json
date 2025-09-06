@@ -1,20 +1,20 @@
 {
-  "root": "/home/runner/work/secret-scan-360/secret-scan-360/tests/test_tokens.py",
+  "root": "/home/runner/work/secret-scan-360/secret-scan-360/tokens.txt",
   "total": 1,
   "findings": [
     {
       "id": "github_pat",
-      "path": "tests/test_tokens.py",
+      "path": "tokens.txt",
       "line": 1,
       "match": "github...2345",
       "severity": "high",
       "meta": {},
       "category": "test",
-      "confidence": 0.9,
+      "confidence": 0.3,
       "reasons": [
-        "path:tests?/"
+        "entropy:sequential"
       ],
-      "risk_score": 20,
+      "risk_score": 28,
       "validated": {
         "state": "invalid",
         "evidence": null
