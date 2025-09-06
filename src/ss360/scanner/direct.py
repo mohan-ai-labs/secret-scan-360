@@ -187,7 +187,7 @@ def scan_with_policy_and_classification(
                 )
         except ImportError:
             # Fallback to direct scanning if scanner config unavailable
-            print(f"[ss360] Using default scanner config")
+            print("[ss360] Using default scanner config")
             findings = scan_direct(root_path, include_patterns, exclude_patterns)
     
     # Enhance findings with validation and classification
