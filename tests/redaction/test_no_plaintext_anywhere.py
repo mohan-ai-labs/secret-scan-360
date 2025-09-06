@@ -37,18 +37,17 @@ class TestSecretRedaction:
 
     def test_short_secret_redaction(self):
         """Test redaction of short secrets."""
-        from ss360.validate.core import _redact_secret
 
         # Test with short secret
-        redacted = _redact_secret("abc")
+        redacted = redact_secret("abc")
         assert redacted == "****"
 
         # Test with 4-character secret
-        redacted = _redact_secret("abcd")
+        redacted = redact_secret("abcd")
         assert redacted == "****"
 
         # Test with longer secret
-        redacted = _redact_secret("abcdefghijk")
+        redacted = redact_secret("abcdefghijk")
         assert redacted == "abcdef****hijk"
 
     def test_evidence_redaction_function(self):
