@@ -4,7 +4,7 @@
   "runs": [
     {
       "automationDetails": {
-        "id": "ss360-secrets-17516179275-copilot-1"
+        "id": "ss360-secrets-17516415436-copilot-1"
       },
       "tool": {
         "driver": {
@@ -47,9 +47,9 @@
           ],
           "properties": {
             "category": "test",
-            "confidence": 0.3,
+            "confidence": 0.9,
             "reasons": [
-              "entropy:sequential"
+              "path:tests?/"
             ]
           }
         }

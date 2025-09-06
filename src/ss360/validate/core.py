@@ -146,28 +146,16 @@ class SlackWebhookValidator:
 
 def _redact_evidence(evidence: str) -> str:
     """Redact secrets in evidence strings showing first 6 + last 4 chars only."""
-    # Simple implementation - find potential secrets and redact them
-    lines = evidence.split("\n")
-    redacted_lines = []
-
-    for line in lines:
-        # Look for patterns that might be secrets (longer alphanumeric strings
-        # with underscores)
-        redacted_line = re.sub(
-            r"\b[A-Za-z0-9+/_-]{16,}\b",  # Match secrets 16+ chars
-            lambda m: _redact_secret(m.group(0)),
-            line,
-        )
-        redacted_lines.append(redacted_line)
-
-    return "\n".join(redacted_lines)
+    # Use central redaction function for consistency
+    from ss360.core.redaction import redact_evidence_string
+    return redact_evidence_string(evidence)
 
 
 def _redact_secret(secret: str) -> str:
     """Redact secret showing first 6 + last 4 characters."""
-    if len(secret) <= 10:
-        return "****"
-    return secret[:6] + "****" + secret[-4:]
+    # Use central redaction function for consistency  
+    from ss360.core.redaction import redact_secret
+    return redact_secret(secret)
 
 
 def run_validators(

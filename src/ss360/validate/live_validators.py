@@ -10,7 +10,9 @@ import json
 import urllib.request
 import urllib.error
 from typing import Dict, Any
-from .core import ValidationResult, ValidationState, _redact_secret
+from .core import ValidationResult, ValidationState
+# Import central redaction function for consistency
+from ss360.core.redaction import redact_secret
 
 
 class GitHubPATLiveValidator:
@@ -52,7 +54,7 @@ class GitHubPATLiveValidator:
                     data = json.loads(response.read().decode())
                     username = data.get("login", "unknown")
                     # Use redacted username for evidence
-                    redacted_username = _redact_secret(username) if len(username) > 10 else username
+                    redacted_username = redact_secret(username) if len(username) > 10 else username
                     return ValidationResult(
                         state=ValidationState.VALID,
                         evidence=f"Valid GitHub token for user: {redacted_username}",
@@ -132,7 +134,7 @@ class AWSAccessKeyLiveValidator:
                 return self._validate_with_sts(key_id, secret_key)
             else:
                 # Without secret key, we can only validate format
-                redacted_key = _redact_secret(key_id)
+                redacted_key = redact_secret(key_id)
                 return ValidationResult(
                     state=ValidationState.INDETERMINATE,
                     reason="AWS Access Key ID format valid, but full validation requires secret key",
@@ -158,7 +160,7 @@ class AWSAccessKeyLiveValidator:
             # This is a simplified mock that just validates the format
             # and returns indeterminate since implementing AWS sig v4 is complex
             
-            redacted_key = _redact_secret(access_key)
+            redacted_key = redact_secret(access_key)
             return ValidationResult(
                 state=ValidationState.INDETERMINATE,
                 evidence=f"AWS credentials format valid: {redacted_key}",

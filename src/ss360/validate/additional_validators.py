@@ -10,7 +10,9 @@ from __future__ import annotations
 import json
 import re
 from typing import Dict, Any
-from .core import ValidationResult, ValidationState, _redact_secret
+from .core import ValidationResult, ValidationState
+# Import central redaction function for consistency
+from ss360.core.redaction import redact_secret
 
 
 class SlackWebhookLocalValidator:
@@ -71,7 +73,7 @@ class SlackWebhookLocalValidator:
             )
 
         # All validations passed
-        redacted_url = _redact_secret(match)
+        redacted_url = redact_secret(match)
         return ValidationResult(
             state=ValidationState.VALID,
             evidence=f"Valid Slack webhook format with enhanced checks: {redacted_url}",
@@ -184,7 +186,7 @@ class GCPServiceAccountKeyLiveValidator:
 
             # For this implementation, we'll return indeterminate since full
             # GCP OAuth2 implementation is complex and would require additional dependencies
-            redacted_email = _redact_secret(client_email)
+            redacted_email = redact_secret(client_email)
             return ValidationResult(
                 state=ValidationState.INDETERMINATE,
                 evidence=f"GCP service account key format valid: {redacted_email}",
@@ -292,7 +294,7 @@ class AzureSASLiveValidator:
             #         return ValidationResult(state=ValidationState.VALID, ...)
 
             # For now, return indeterminate with format validation
-            redacted_host = _redact_secret(host)
+            redacted_host = redact_secret(host)
             evidence_msg = f"Azure SAS token format valid for host: {redacted_host}"
             reason_msg = (
                 "Format validation passed, live validation would require "

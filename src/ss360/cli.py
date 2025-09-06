@@ -182,14 +182,18 @@ def main(argv=None):
                 raw_mode=args.raw,
             )
             
+            # Apply redaction to all outputs
+            from ss360.core.redaction import redact_scan_result
+            redacted_result = redact_scan_result(result)
+            
             # Write JSON output
             json_output = Path(args.json_out)
             json_output.parent.mkdir(parents=True, exist_ok=True)
-            json_output.write_text(json.dumps(result, indent=2))
+            json_output.write_text(json.dumps(redacted_result, indent=2))
             print(f"[ss360] Wrote report: {json_output}")
             
-            # Print category summary
-            _print_category_summary(result["findings"])
+            # Print category summary (using redacted data)
+            _print_category_summary(redacted_result["findings"])
             
             # Write SARIF output if requested
             sarif_out = args.sarif_out
@@ -197,7 +201,7 @@ def main(argv=None):
                 sarif_out = "findings.sarif"
                 
             if sarif_out:
-                sarif = build_sarif(result)
+                sarif = build_sarif(redacted_result)
                 sarif_path = Path(sarif_out)
                 sarif_path.parent.mkdir(parents=True, exist_ok=True)
                 sarif_path.write_text(json.dumps(sarif, indent=2))

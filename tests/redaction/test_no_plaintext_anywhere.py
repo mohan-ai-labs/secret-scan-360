@@ -5,10 +5,14 @@ Tests to ensure no plaintext secrets appear in evidence or logs.
 
 import sys
 import os
+import tempfile
+import json
+from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from ss360.validate.core import SlackWebhookValidator, run_validators, _redact_evidence
+from ss360.core.redaction import redact_scan_result, redact_secret
 
 
 class TestSecretRedaction:
@@ -150,3 +154,98 @@ class TestSecretRedaction:
 
             # Should have some form of redaction
             assert "****" in redacted
+
+
+class TestCLIOutputRedaction:
+    """Test that CLI outputs are properly redacted."""
+
+    def test_json_output_redaction(self):
+        """Test that JSON output has redacted secrets."""
+        # Create a mock scan result
+        scan_result = {
+            "findings": [
+                {
+                    "id": "github_pat",
+                    "match": "ghp_1234567890abcdefghijklmnopqrstuvwxyz012345",
+                    "path": "test.py",
+                    "line": 1,
+                }
+            ],
+            "total": 1,
+        }
+
+        # Apply redaction
+        redacted_result = redact_scan_result(scan_result)
+
+        # Convert to JSON as CLI would
+        json_output = json.dumps(redacted_result, indent=2)
+
+        # Should not contain full secret
+        assert "ghp_1234567890abcdefghijklmnopqrstuvwxyz012345" not in json_output
+
+        # Should contain redacted version
+        assert "ghp_12****2345" in json_output
+
+    def test_sarif_output_redaction(self):
+        """Test that SARIF output has redacted secrets."""
+        from ss360.sarif.export import build_sarif
+
+        # Create a mock scan result with potential secrets in reason
+        scan_result = {
+            "findings": [
+                {
+                    "kind": "github_pat",
+                    "match": "ghp_1234567890abcdefghijklmnopqrstuvwxyz012345",
+                    "path": "test.py",
+                    "line": 1,
+                    "reason": "Found GitHub token: ghp_1234567890abcdefghijklmnopqrstuvwxyz012345",
+                }
+            ],
+            "root": "/tmp",
+        }
+
+        # Apply redaction first
+        redacted_result = redact_scan_result(scan_result)
+
+        # Build SARIF
+        sarif = build_sarif(redacted_result)
+
+        # Convert to JSON
+        sarif_json = json.dumps(sarif, indent=2)
+
+        # Should not contain full secret
+        assert "ghp_1234567890abcdefghijklmnopqrstuvwxyz012345" not in sarif_json
+
+        # Should contain redacted version in SARIF message
+        assert "ghp_12****2345" in sarif_json
+
+    def test_validator_evidence_redaction(self):
+        """Test that validator evidence is properly redacted in output."""
+        # Create scan result with validator evidence containing secrets
+        scan_result = {
+            "findings": [
+                {
+                    "id": "github_pat",
+                    "match": "ghp_1234567890abcdefghijklmnopqrstuvwxyz012345",
+                    "validators": {
+                        "results": {
+                            "0": [
+                                {
+                                    "state": "valid",
+                                    "evidence": "Valid GitHub token: ghp_1234567890abcdefghijklmnopqrstuvwxyz012345",
+                                    "validator_name": "github_pat_live",
+                                }
+                            ]
+                        }
+                    },
+                }
+            ],
+        }
+
+        # Apply redaction
+        redacted_result = redact_scan_result(scan_result)
+
+        # Check that evidence is redacted
+        evidence = redacted_result["findings"][0]["validators"]["results"]["0"][0]["evidence"]
+        assert "ghp_1234567890abcdefghijklmnopqrstuvwxyz012345" not in evidence
+        assert "ghp_12****2345" in evidence
