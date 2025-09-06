@@ -31,7 +31,7 @@
           "ruleIndex": 0,
           "level": "error",
           "message": {
-            "text": "Unknown"
+            "text": "Azure Storage SAS token detected (expires: 2023-01-01T00:00:00Z)"
           },
           "locations": [
             {
@@ -46,10 +46,10 @@
             }
           ],
           "properties": {
-            "category": "test",
-            "confidence": 0.3,
+            "category": "expired",
+            "confidence": 0.95,
             "reasons": [
-              "entropy:sequential"
+              "offline:azure_sas_expired"
             ]
           }
         }

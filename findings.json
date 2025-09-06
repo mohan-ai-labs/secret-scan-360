@@ -1,18 +1,21 @@
 {
-  "root": "/tmp/tmpo5_gop57/secrets.env",
+  "root": "/tmp/azure_test.env",
   "total": 1,
   "findings": [
     {
-      "id": "github_pat",
-      "path": "/tmp/tmpo5_gop57/secrets.env",
+      "id": "azure_sas",
+      "path": "/tmp/azure_test.env",
       "line": 1,
-      "match": "ghp_12...3456",
+      "match": "https://myaccount.blob.core.windows.net/container/blob?[SAS-TOKEN-REDACTED]",
       "severity": "high",
-      "meta": {},
-      "category": "test",
-      "confidence": 0.3,
+      "reason": "Azure Storage SAS token detected (expires: 2023-01-01T00:00:00Z)",
+      "meta": {
+        "sas_expiry": "2023-01-01T00:00:00Z"
+      },
+      "category": "expired",
+      "confidence": 0.95,
       "reasons": [
-        "entropy:sequential"
+        "offline:azure_sas_expired"
       ]
     }
   ],
