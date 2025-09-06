@@ -4,7 +4,7 @@
   "runs": [
     {
       "automationDetails": {
-        "id": "ss360-secrets-17505859499-copilot-1"
+        "id": "ss360-secrets-17508805561-copilot-1"
       },
       "tool": {
         "driver": {
@@ -31,7 +31,7 @@
           "ruleIndex": 0,
           "level": "error",
           "message": {
-            "text": "AWS Secret Access Key"
+            "text": "Unknown"
           },
           "locations": [
             {
@@ -47,9 +47,63 @@
           ],
           "properties": {
             "category": "test",
-            "confidence": 0.7,
+            "confidence": 0.85,
             "reasons": [
-              "marker:XXX"
+              "filename:test"
+            ]
+          }
+        },
+        {
+          "ruleId": "Unknown",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Unknown"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "."
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ],
+          "properties": {
+            "category": "test",
+            "confidence": 0.85,
+            "reasons": [
+              "filename:test"
+            ]
+          }
+        },
+        {
+          "ruleId": "Unknown",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "AWS Access Key ID"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "."
+                },
+                "region": {
+                  "startLine": 22
+                }
+              }
+            }
+          ],
+          "properties": {
+            "category": "test",
+            "confidence": 0.85,
+            "reasons": [
+              "filename:test"
             ]
           }
         },
@@ -59,6 +113,33 @@
           "level": "error",
           "message": {
             "text": "AWS Secret Access Key"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "."
+                },
+                "region": {
+                  "startLine": 23
+                }
+              }
+            }
+          ],
+          "properties": {
+            "category": "test",
+            "confidence": 0.85,
+            "reasons": [
+              "filename:test"
+            ]
+          }
+        },
+        {
+          "ruleId": "Unknown",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Azure Storage SAS token detected (expires: 2022-01-01T00:00:00Z)"
           },
           "locations": [
             {
@@ -68,33 +149,6 @@
                 },
                 "region": {
                   "startLine": 10
-                }
-              }
-            }
-          ],
-          "properties": {
-            "category": "test",
-            "confidence": 0.7,
-            "reasons": [
-              "marker:XXX"
-            ]
-          }
-        },
-        {
-          "ruleId": "Unknown",
-          "ruleIndex": 0,
-          "level": "error",
-          "message": {
-            "text": "Azure Storage SAS token detected (expires: 2023-01-01T00:00:00Z)"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "."
-                },
-                "region": {
-                  "startLine": 4
                 }
               }
             }
@@ -112,7 +166,7 @@
           "ruleIndex": 0,
           "level": "error",
           "message": {
-            "text": "Azure Storage SAS token detected (expires: 2030-12-31T23:59:59Z)"
+            "text": "Azure Storage SAS token detected (expires: 2030-01-01T00:00:00Z)"
           },
           "locations": [
             {
@@ -121,16 +175,16 @@
                   "uri": "."
                 },
                 "region": {
-                  "startLine": 10
+                  "startLine": 13
                 }
               }
             }
           ],
           "properties": {
             "category": "test",
-            "confidence": 0.7,
+            "confidence": 0.85,
             "reasons": [
-              "marker:XXX"
+              "filename:test"
             ]
           }
         },
@@ -139,7 +193,7 @@
           "ruleIndex": 0,
           "level": "error",
           "message": {
-            "text": "JSON Web Token detected (expires: 2000-01-01T00:00:00)"
+            "text": "Slack incoming webhook URL detected"
           },
           "locations": [
             {
@@ -148,7 +202,34 @@
                   "uri": "."
                 },
                 "region": {
-                  "startLine": 7
+                  "startLine": 16
+                }
+              }
+            }
+          ],
+          "properties": {
+            "category": "test",
+            "confidence": 0.85,
+            "reasons": [
+              "filename:test"
+            ]
+          }
+        },
+        {
+          "ruleId": "Unknown",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "JSON Web Token detected (expires: 2018-01-18T01:30:22)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "."
+                },
+                "region": {
+                  "startLine": 19
                 }
               }
             }
@@ -158,6 +239,33 @@
             "confidence": 0.95,
             "reasons": [
               "offline:jwt_expired"
+            ]
+          }
+        },
+        {
+          "ruleId": "Unknown",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "GCP Service Account JSON key detected"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "."
+                },
+                "region": {
+                  "startLine": 26
+                }
+              }
+            }
+          ],
+          "properties": {
+            "category": "test",
+            "confidence": 0.85,
+            "reasons": [
+              "filename:test"
             ]
           }
         }
