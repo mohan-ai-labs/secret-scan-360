@@ -4,7 +4,7 @@
   "runs": [
     {
       "automationDetails": {
-        "id": "ss360-secrets-17509318039-copilot-1"
+        "id": "ss360-secrets-17515999307-copilot-1"
       },
       "tool": {
         "driver": {
@@ -31,7 +31,7 @@
           "ruleIndex": 0,
           "level": "error",
           "message": {
-            "text": "Azure Storage SAS token detected (expires: 2023-01-01T00:00:00Z)"
+            "text": "Unknown"
           },
           "locations": [
             {
@@ -46,10 +46,10 @@
             }
           ],
           "properties": {
-            "category": "expired",
-            "confidence": 0.95,
+            "category": "test",
+            "confidence": 0.3,
             "reasons": [
-              "offline:azure_sas_expired"
+              "entropy:sequential"
             ]
           }
         }

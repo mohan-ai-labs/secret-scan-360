@@ -19,7 +19,25 @@ import os
 import sys
 import subprocess
 from pathlib import Path
+from typing import Dict, List, Any
 from . import __version__
+
+
+def _print_category_summary(findings: List[Dict[str, Any]]) -> None:
+    """Print a brief category summary of findings."""
+    category_counts = {"actual": 0, "expired": 0, "test": 0, "unknown": 0}
+
+    for finding in findings:
+        category = finding.get("category", "unknown")
+        if category in category_counts:
+            category_counts[category] += 1
+        else:
+            category_counts["unknown"] += 1
+
+    print("[ss360] Category Summary:")
+    for category, count in category_counts.items():
+        print(f"[ss360]   {category}: {count}")
+    print(f"[ss360]   total: {sum(category_counts.values())}")
 
 
 def main(argv=None):
@@ -137,6 +155,9 @@ def main(argv=None):
             json_output.parent.mkdir(parents=True, exist_ok=True)
             json_output.write_text(json.dumps(result, indent=2))
             print(f"[ss360] Wrote report: {json_output}")
+            
+            # Print category summary
+            _print_category_summary(result["findings"])
             
             # Write SARIF output if requested
             sarif_out = args.sarif_out

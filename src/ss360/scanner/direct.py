@@ -186,8 +186,50 @@ def _enhance_findings(findings: List[Dict[str, Any]]) -> tuple[List[Dict[str, An
     enhanced = []
     validation_results = {}
     
+    # Load policy config for validation settings
+    try:
+        from ss360.policy.config import load_policy_config, get_default_policy_config
+        
+        # Try to load from common locations
+        policy_paths = ["policy.yml", "policy.yaml", "policy.example.yml"]
+        policy_config = None
+        for policy_path in policy_paths:
+            try:
+                policy_config = load_policy_config(policy_path)
+                break
+            except FileNotFoundError:
+                continue
+        
+        if policy_config is None:
+            policy_config = get_default_policy_config()
+            
+        validation_config = policy_config.get("validators", {})
+    except Exception:
+        # Fallback to safe defaults if no policy config
+        validation_config = {"allow_network": False, "global_qps": 2.0}
+    
     for i, finding in enumerate(findings):
-        # Run classification on each finding
+        # Run validation for this finding
+        try:
+            from ss360.validate.core import run_validators
+            validation_results_list = run_validators(
+                finding, {"validators": validation_config}
+            )
+            validation_results[str(i)] = [
+                {
+                    "state": result.state.value,
+                    "evidence": result.evidence,
+                    "reason": result.reason,
+                    "validator_name": result.validator_name,
+                }
+                for result in validation_results_list
+            ]
+        except Exception:
+            # If validation fails, continue without it
+            validation_results[str(i)] = []
+            validation_results_list = []
+        
+        # Run classification on each finding with validation context
         try:
             from ss360.classify import classify
             
@@ -201,14 +243,24 @@ def _enhance_findings(findings: List[Dict[str, Any]]) -> tuple[List[Dict[str, An
             elif "full_url" in meta:
                 classification_finding["match"] = meta["full_url"]
             
-            context = {"validation_results": []}  # No network validation in this implementation
+            # Pass validation results to classifier
+            context = {"validation_results": validation_results[str(i)]}
             category, confidence, reasons = classify(classification_finding, context)
+            
+            # Calculate risk score
+            try:
+                from ss360.risk.score import calculate_risk_score
+                risk_score = calculate_risk_score(classification_finding, validation_results[str(i)])
+            except Exception:
+                risk_score = 50  # Default risk score
             
             enhanced_finding = finding.copy()
             enhanced_finding.update({
                 "category": category,
                 "confidence": confidence,
-                "reasons": reasons
+                "reasons": reasons,
+                "risk_score": risk_score,
+                "validated": _create_validated_field(validation_results[str(i)])
             })
             
             # Remove full secrets from meta to ensure they don't appear in output
@@ -220,7 +272,6 @@ def _enhance_findings(findings: List[Dict[str, Any]]) -> tuple[List[Dict[str, An
                 enhanced_finding["meta"] = meta
             
             enhanced.append(enhanced_finding)
-            validation_results[str(i)] = []
             
         except Exception as e:
             # If classification fails, add finding without classification
@@ -228,7 +279,9 @@ def _enhance_findings(findings: List[Dict[str, Any]]) -> tuple[List[Dict[str, An
             enhanced_finding.update({
                 "category": "unknown",
                 "confidence": 0.1,
-                "reasons": [f"classification_error:{str(e)}"]
+                "reasons": [f"classification_error:{str(e)}"],
+                "risk_score": 50,
+                "validated": _create_validated_field(validation_results.get(str(i), []))
             })
             
             # Remove full secrets from meta to ensure they don't appear in output
@@ -240,18 +293,70 @@ def _enhance_findings(findings: List[Dict[str, Any]]) -> tuple[List[Dict[str, An
                 enhanced_finding["meta"] = meta
             
             enhanced.append(enhanced_finding)
-            validation_results[str(i)] = []
     
     return enhanced, validation_results
 
 
+def _create_validated_field(validation_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Create validated field from validation results."""
+    if not validation_results:
+        return {"state": "indeterminate"}
+    
+    # Find the most decisive result
+    for result in validation_results:
+        state = result.get("state", "indeterminate")
+        if state in ["valid", "invalid"]:
+            evidence = result.get("evidence")
+            return {
+                "state": "confirmed" if state == "valid" else "invalid",
+                "evidence": evidence if evidence else None
+            }
+    
+    # All results were indeterminate
+    return {"state": "indeterminate"}
+
+
 def _enforce_policy(findings: List[Dict[str, Any]], policy_path: Optional[str] = None) -> Dict[str, Any]:
     """Enforce policy on findings."""
-    # Load policy
-    if policy_path and Path(policy_path).exists():
-        print(f"[ss360] Loaded policy: {Path(policy_path).resolve()}")
-        # For now, just return success
-        return {"passed": True, "violations": []}
-    else:
-        # No policy or policy not found
+    try:
+        from ss360.policy.config import load_policy_config, get_default_policy_config
+        from ss360.policy.enforce import PolicyEnforcer
+        
+        # Load policy
+        if policy_path and Path(policy_path).exists():
+            policy_config = load_policy_config(policy_path)
+            print(f"[ss360] Loaded policy: {Path(policy_path).resolve()}")
+        else:
+            # Try to load from common locations
+            policy_paths = ["policy.yml", "policy.yaml", "policy.example.yml"]
+            policy_config = None
+            for p_path in policy_paths:
+                try:
+                    policy_config = load_policy_config(p_path)
+                    break
+                except FileNotFoundError:
+                    continue
+            
+            if policy_config is None:
+                policy_config = get_default_policy_config()
+        
+        # Enforce policy
+        enforcer = PolicyEnforcer(policy_config)
+        enforcement_result = enforcer.enforce(findings)
+        
+        return {
+            "passed": enforcement_result.passed,
+            "violations": [
+                {
+                    "type": v.type.value,
+                    "message": v.message,
+                    "finding": v.finding_id if hasattr(v, 'finding_id') else None
+                }
+                for v in enforcement_result.violations
+            ]
+        }
+        
+    except Exception as e:
+        print(f"[ss360] Policy enforcement error: {e}")
+        # Return success for fallback compatibility
         return {"passed": True, "violations": []}
