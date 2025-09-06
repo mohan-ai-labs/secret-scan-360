@@ -47,9 +47,9 @@
           ],
           "properties": {
             "category": "test",
-            "confidence": 0.85,
+            "confidence": 0.3,
             "reasons": [
-              "filename:test"
+              "entropy:sequential"
             ]
           }
         }

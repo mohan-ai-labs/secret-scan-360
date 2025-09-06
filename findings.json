@@ -1,18 +1,18 @@
 {
-  "root": "/tmp/test.env",
+  "root": "/tmp/tmpo5_gop57/secrets.env",
   "total": 1,
   "findings": [
     {
       "id": "github_pat",
-      "path": "/tmp/test.env",
+      "path": "/tmp/tmpo5_gop57/secrets.env",
       "line": 1,
       "match": "ghp_12...3456",
       "severity": "high",
       "meta": {},
       "category": "test",
-      "confidence": 0.85,
+      "confidence": 0.3,
       "reasons": [
-        "filename:test"
+        "entropy:sequential"
       ]
     }
   ],

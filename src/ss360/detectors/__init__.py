@@ -20,10 +20,8 @@ class DetectorRegistry:
     
     def _load_detectors(self):
         """Load known detectors that have the scan() interface."""
-        # Add the project root to sys.path for imports
-        project_root = str(Path(__file__).parent.parent.parent)
-        if project_root not in sys.path:
-            sys.path.insert(0, project_root)
+        import importlib
+        import logging
         
         # List of known detectors that have scan() interface
         detector_modules = [
@@ -37,21 +35,25 @@ class DetectorRegistry:
         
         for module_name in detector_modules:
             try:
-                # Import from detectors.module_name
-                import importlib
-                module = importlib.import_module(f"detectors.{module_name}")
+                # Import from ss360.detectors.module_name
+                module = importlib.import_module(f"ss360.detectors.{module_name}")
                 
                 # Check if it has the new scan() interface
                 if hasattr(module, "scan") and hasattr(module, "NAME"):
                     self._detectors[module.NAME] = module.scan
                     
-            except (ImportError, AttributeError):
-                # Skip detectors that can't be imported or don't have expected interface
+            except (ImportError, AttributeError) as e:
+                # Log warning but don't crash - skip detectors that can't be imported
+                logging.warning(f"Failed to load detector {module_name}: {e}")
                 continue
     
     def all_detectors(self) -> Dict[str, DetectorScanFunc]:
         """Return all registered detector scan functions."""
         return self._detectors.copy()
+    
+    def keys(self):
+        """Return detector keys for compatibility with acceptance criteria."""
+        return self._detectors.keys()
         
     def scan_with_all(self, blob: bytes, path: str) -> List[Finding]:
         """Run all detectors on the given blob and return all findings."""
