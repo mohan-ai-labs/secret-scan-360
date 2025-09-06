@@ -6,6 +6,9 @@ from typing import Dict, Any
 
 
 def build_sarif(report: Dict[str, Any]) -> Dict[str, Any]:
+    """Build SARIF report from scan results with redaction safety."""
+    from ss360.core.redaction import redact_evidence_string
+    
     findings = report.get("findings", []) or []
     root = str(report.get("root", ""))
 
@@ -33,6 +36,11 @@ def build_sarif(report: Dict[str, Any]) -> Dict[str, Any]:
         path = str(f.get("path", ""))
         line = int(f.get("line") or 1)
         reason = f.get("reason") or k
+        
+        # Apply additional redaction to reason field for safety
+        if isinstance(reason, str):
+            reason = redact_evidence_string(reason)
+        
         try:
             p_rel = str(Path(path).resolve().relative_to(Path(root).resolve()))
         except Exception:

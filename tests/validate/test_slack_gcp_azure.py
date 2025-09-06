@@ -97,22 +97,24 @@ class TestSlackWebhookLocalValidator:
         # This URL doesn't match the basic pattern so it fails at the regex level
         assert "Does not match Slack webhook URL pattern" in result.reason
 
-    def test_redaction_preserves_last_four(self):
-        """Test that redaction shows last 4 characters."""
-        validator = SlackWebhookLocalValidator()
+    def test_redaction_preserves_first_six_last_four(self):
+        """Test that redaction shows first 6 + last 4 characters."""
+        from src.ss360.validate.core import _redact_secret
+        
         webhook = "https://hooks.slack.com/services/T12345678/B12345678/1234567890ABCDEF12345678"
 
-        redacted = validator._redact_secret(webhook)
+        redacted = _redact_secret(webhook)
 
-        assert redacted == "****5678"
+        assert redacted == "https:****5678"
         assert webhook not in redacted
 
     def test_redaction_short_secret(self):
         """Test redaction of short secrets."""
-        validator = SlackWebhookLocalValidator()
+        from src.ss360.validate.core import _redact_secret
+        
         short_secret = "abc"
 
-        redacted = validator._redact_secret(short_secret)
+        redacted = _redact_secret(short_secret)
 
         assert redacted == "****"
 

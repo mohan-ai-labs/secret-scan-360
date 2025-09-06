@@ -11,6 +11,8 @@ import json
 import re
 from typing import Dict, Any
 from .core import ValidationResult, ValidationState
+# Import central redaction function for consistency
+from ss360.core.redaction import redact_secret
 
 
 class SlackWebhookLocalValidator:
@@ -71,7 +73,7 @@ class SlackWebhookLocalValidator:
             )
 
         # All validations passed
-        redacted_url = self._redact_secret(match)
+        redacted_url = redact_secret(match)
         return ValidationResult(
             state=ValidationState.VALID,
             evidence=f"Valid Slack webhook format with enhanced checks: {redacted_url}",
@@ -79,11 +81,7 @@ class SlackWebhookLocalValidator:
             validator_name=self.name,
         )
 
-    def _redact_secret(self, secret: str) -> str:
-        """Redact secret showing only last 4 characters."""
-        if len(secret) <= 4:
-            return "****"
-        return "****" + secret[-4:]
+    # No longer need individual _redact_secret method - using central function
 
 
 class GCPServiceAccountKeyLiveValidator:
@@ -188,9 +186,7 @@ class GCPServiceAccountKeyLiveValidator:
 
             # For this implementation, we'll return indeterminate since full
             # GCP OAuth2 implementation is complex and would require additional dependencies
-            redacted_email = (
-                "****" + client_email[-4:] if len(client_email) > 4 else "****"
-            )
+            redacted_email = redact_secret(client_email)
             return ValidationResult(
                 state=ValidationState.INDETERMINATE,
                 evidence=f"GCP service account key format valid: {redacted_email}",
@@ -298,7 +294,7 @@ class AzureSASLiveValidator:
             #         return ValidationResult(state=ValidationState.VALID, ...)
 
             # For now, return indeterminate with format validation
-            redacted_host = "****" + host[-4:] if len(host) > 4 else "****"
+            redacted_host = redact_secret(host)
             evidence_msg = f"Azure SAS token format valid for host: {redacted_host}"
             reason_msg = (
                 "Format validation passed, live validation would require "

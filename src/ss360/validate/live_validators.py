@@ -11,6 +11,8 @@ import urllib.request
 import urllib.error
 from typing import Dict, Any
 from .core import ValidationResult, ValidationState
+# Import central redaction function for consistency
+from ss360.core.redaction import redact_secret
 
 
 class GitHubPATLiveValidator:
@@ -51,9 +53,11 @@ class GitHubPATLiveValidator:
                 if response.status == 200:
                     data = json.loads(response.read().decode())
                     username = data.get("login", "unknown")
+                    # Use redacted username for evidence
+                    redacted_username = redact_secret(username) if len(username) > 10 else username
                     return ValidationResult(
                         state=ValidationState.VALID,
-                        evidence=f"Valid GitHub token for user: {username}",
+                        evidence=f"Valid GitHub token for user: {redacted_username}",
                         reason="Token successfully authenticated with GitHub API",
                         validator_name=self.name,
                     )
@@ -111,23 +115,30 @@ class AWSAccessKeyLiveValidator:
             )
 
         try:
-            # AWS STS GetCallerIdentity endpoint
-            # Note: This is a simplified implementation - in practice you'd need
-            # AWS signature v4 signing which requires the secret key too
-            # For now, we'll just validate the format and return indeterminate
-            # A full implementation would use boto3 or implement AWS sig v4
-
-            if len(key_id) == 20 and key_id.startswith("AKIA"):
-                return ValidationResult(
-                    state=ValidationState.INDETERMINATE,
-                    reason="AWS Access Key ID format valid, but full validation requires secret key",
-                    evidence=f"Valid AKIA format: ****{key_id[-4:]}",
-                    validator_name=self.name,
-                )
-            else:
+            # Basic format validation first
+            if len(key_id) != 20 or not key_id.startswith("AKIA"):
                 return ValidationResult(
                     state=ValidationState.INVALID,
                     reason="Invalid AWS Access Key ID format",
+                    validator_name=self.name,
+                )
+
+            # For live validation, we would need both access key and secret key
+            # Since we typically only detect the access key ID, we can't perform 
+            # a full STS call without the secret. However, we can check if sandbox
+            # credentials are provided in the config for testing purposes.
+            
+            # Check if we have test credentials in the finding context
+            secret_key = finding.get("aws_secret_key")  # Could be provided for testing
+            if secret_key:
+                return self._validate_with_sts(key_id, secret_key)
+            else:
+                # Without secret key, we can only validate format
+                redacted_key = redact_secret(key_id)
+                return ValidationResult(
+                    state=ValidationState.INDETERMINATE,
+                    reason="AWS Access Key ID format valid, but full validation requires secret key",
+                    evidence=f"Valid AKIA format: {redacted_key}",
                     validator_name=self.name,
                 )
 
@@ -135,5 +146,31 @@ class AWSAccessKeyLiveValidator:
             return ValidationResult(
                 state=ValidationState.INDETERMINATE,
                 reason=f"Validation error: {str(e)}",
+                validator_name=self.name,
+            )
+
+    def _validate_with_sts(self, access_key: str, secret_key: str) -> ValidationResult:
+        """Attempt STS GetCallerIdentity with provided credentials."""
+        try:
+            # For a real implementation, this would:
+            # 1. Use AWS Signature Version 4 to sign the request
+            # 2. Make a request to https://sts.amazonaws.com/
+            # 3. Check if the credentials are valid
+            # 
+            # This is a simplified mock that just validates the format
+            # and returns indeterminate since implementing AWS sig v4 is complex
+            
+            redacted_key = redact_secret(access_key)
+            return ValidationResult(
+                state=ValidationState.INDETERMINATE,
+                evidence=f"AWS credentials format valid: {redacted_key}",
+                reason="Format validation passed, but STS validation requires full AWS signature implementation",
+                validator_name=self.name,
+            )
+            
+        except Exception as e:
+            return ValidationResult(
+                state=ValidationState.INDETERMINATE,
+                reason=f"STS validation error: {str(e)}",
                 validator_name=self.name,
             )
