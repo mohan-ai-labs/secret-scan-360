@@ -116,8 +116,14 @@ def main(argv=None):
         # Use direct scanning instead of shelling out to ci_scan.py
         from ss360.scanner.direct import scan_with_policy_and_classification
         from ss360.sarif.export import build_sarif
+        from ss360.core.exceptions import SS360ConfigError
         
         try:
+            # Print absolute policy path if provided
+            if args.policy:
+                policy_abs_path = Path(args.policy).resolve()
+                print(f"[ss360] Loaded policy: {policy_abs_path}")
+            
             # Perform the scan
             result = scan_with_policy_and_classification(
                 root_path=args.root,
@@ -155,6 +161,9 @@ def main(argv=None):
             print("[ss360] PASS")
             return 0
             
+        except SS360ConfigError as e:
+            print(f"[ss360] CONFIG ERROR: {e}", file=sys.stderr)
+            return 1
         except Exception as e:
             print(f"[ss360] ERROR: Scan failed: {e}", file=sys.stderr)
             return 1

@@ -1,8 +1,27 @@
 {
-  "root": "/tmp/tokens_test.txt",
-  "total": 0,
-  "findings": [],
-  "validation_results": {},
+  "root": "/tmp/azure_test.env",
+  "total": 1,
+  "findings": [
+    {
+      "id": "azure_sas",
+      "path": "/tmp/azure_test.env",
+      "line": 1,
+      "match": "https://myaccount.blob.core.windows.net/container/blob?[SAS-TOKEN-REDACTED]",
+      "severity": "high",
+      "reason": "Azure Storage SAS token detected (expires: 2023-01-01T00:00:00Z)",
+      "meta": {
+        "sas_expiry": "2023-01-01T00:00:00Z"
+      },
+      "category": "expired",
+      "confidence": 0.95,
+      "reasons": [
+        "offline:azure_sas_expired"
+      ]
+    }
+  ],
+  "validation_results": {
+    "0": []
+  },
   "policy_result": {
     "passed": true,
     "violations": []
