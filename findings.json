@@ -1,23 +1,53 @@
 {
-  "root": "/home/runner/work/secret-scan-360/secret-scan-360/tokens.txt",
+  "root": "/home/runner/work/secret-scan-360/secret-scan-360/tests/test_tokens.py",
   "total": 1,
   "findings": [
     {
       "id": "github_pat",
-      "path": "tokens.txt",
+      "path": "tests/test_tokens.py",
       "line": 1,
       "match": "github...2345",
       "severity": "high",
       "meta": {},
       "category": "test",
-      "confidence": 0.3,
+      "confidence": 0.9,
       "reasons": [
-        "entropy:sequential"
-      ]
+        "path:tests?/"
+      ],
+      "risk_score": 20,
+      "validated": {
+        "state": "invalid",
+        "evidence": null
+      }
     }
   ],
   "validation_results": {
-    "0": []
+    "0": [
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook format",
+        "validator_name": "slack_webhook_format"
+      },
+      {
+        "state": "invalid",
+        "evidence": null,
+        "reason": "Does not match Slack webhook URL pattern",
+        "validator_name": "slack_webhook_local"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "gcp_sa_key_live"
+      },
+      {
+        "state": "indeterminate",
+        "evidence": null,
+        "reason": "Network disabled - validator skipped",
+        "validator_name": "azure_sas_live"
+      }
+    ]
   },
   "policy_result": {
     "passed": true,

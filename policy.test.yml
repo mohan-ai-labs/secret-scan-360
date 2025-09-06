@@ -1,0 +1,8 @@
+version: 1
+budgets:
+  new_actual_findings: 0
+  new_expired_findings: 999
+  new_test_findings: 999
+validators:
+  allow_network: true
+  global_qps: 2.0
