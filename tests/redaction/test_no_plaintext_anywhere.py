@@ -33,20 +33,19 @@ class TestSecretRedaction:
 
     def test_short_secret_redaction(self):
         """Test redaction of short secrets."""
-        validator = SlackWebhookValidator()
+        from ss360.validate.core import _redact_secret
 
         # Test with short secret
-        validator_instance = validator
-        redacted = validator_instance._redact_secret("abc")
+        redacted = _redact_secret("abc")
         assert redacted == "****"
 
         # Test with 4-character secret
-        redacted = validator_instance._redact_secret("abcd")
+        redacted = _redact_secret("abcd")
         assert redacted == "****"
 
         # Test with longer secret
-        redacted = validator_instance._redact_secret("abcdefgh")
-        assert redacted == "****efgh"
+        redacted = _redact_secret("abcdefghijk")
+        assert redacted == "abcdef****hijk"
 
     def test_evidence_redaction_function(self):
         """Test the general evidence redaction function."""
@@ -78,8 +77,8 @@ class TestSecretRedaction:
 
         results = run_validators(finding, config)
 
-        # Should have 4 results (2 Slack validators + 2 network validators skipped)
-        assert len(results) == 4
+        # Should have 6 results (2 Slack validators + 4 network validators skipped)
+        assert len(results) == 6
 
         # Check that Slack validators have redacted evidence
         slack_results = [
@@ -110,24 +109,27 @@ class TestSecretRedaction:
             if result.reason:
                 assert "SECRETTOKEN123456789ABC" not in result.reason
 
-    def test_redaction_preserves_last_four_chars(self):
-        """Test that redaction consistently shows last 4 characters."""
+    def test_redaction_preserves_first_six_last_four_chars(self):
+        """Test that redaction consistently shows first 6 + last 4 characters."""
+        from ss360.validate.core import _redact_secret
+        
         test_cases = [
-            ("abcdefghijklmnop", "****mnop"),
-            ("12345", "****2345"),  # Shows 4 chars for 5+ char string
-            ("123456", "****3456"),  # Shows 4 chars for 6+ char string
-            ("1234567", "****4567"),  # Shows 4 chars for 7+ char string
-            ("12345678", "****5678"),  # Shows 4 chars for 8+ char string
-            ("very_long_secret_token_12345678", "****5678"),
+            ("abcdefghijklmnop", "abcdef****mnop"),
+            ("12345", "****"),  # Shows **** for short strings
+            ("123456", "****"),  # Shows **** for 6-char string  
+            ("1234567", "****"),  # Shows **** for 7-char string
+            ("12345678", "****"),  # Shows **** for 8-char string
+            ("123456789", "****"),  # Shows **** for 9-char string
+            ("1234567890", "****"),  # Shows **** for 10-char string
+            ("12345678901", "123456****8901"),  # Shows first6+last4 for 11+ chars
+            ("very_long_secret_token_12345678", "very_l****5678"),
             ("abc", "****"),  # Shows **** for short secrets
             ("abcd", "****"),  # Shows **** for 4-char secrets
         ]
 
-        validator = SlackWebhookValidator()
-
         for secret, expected in test_cases:
-            redacted = validator._redact_secret(secret)
-            assert redacted == expected, f"Failed for secret: {secret}"
+            redacted = _redact_secret(secret)
+            assert redacted == expected, f"Failed for secret: {secret}, got {redacted}, expected {expected}"
 
     def test_evidence_does_not_leak_patterns(self):
         """Test that evidence doesn't accidentally leak secret patterns."""

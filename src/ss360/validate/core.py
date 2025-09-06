@@ -128,8 +128,8 @@ class SlackWebhookValidator:
         match = finding.get("match", "")
 
         if self.SLACK_WEBHOOK_PATTERN.match(match):
-            # Redact the secret - only show last 4 characters
-            redacted = self._redact_secret(match)
+            # Redact the secret using central redaction function
+            redacted = _redact_secret(match)
             return ValidationResult(
                 state=ValidationState.VALID,
                 evidence=f"Valid Slack webhook format: {redacted}",
@@ -143,15 +143,9 @@ class SlackWebhookValidator:
                 validator_name=self.name,
             )
 
-    def _redact_secret(self, secret: str) -> str:
-        """Redact secret showing only last 4 characters."""
-        if len(secret) <= 4:
-            return "****"
-        return "****" + secret[-4:]
-
 
 def _redact_evidence(evidence: str) -> str:
-    """Redact secrets in evidence strings."""
+    """Redact secrets in evidence strings showing first 6 + last 4 chars only."""
     # Simple implementation - find potential secrets and redact them
     lines = evidence.split("\n")
     redacted_lines = []
@@ -161,12 +155,19 @@ def _redact_evidence(evidence: str) -> str:
         # with underscores)
         redacted_line = re.sub(
             r"\b[A-Za-z0-9+/_-]{16,}\b",  # Match secrets 16+ chars
-            lambda m: ("****" + m.group(0)[-4:] if len(m.group(0)) > 4 else "****"),
+            lambda m: _redact_secret(m.group(0)),
             line,
         )
         redacted_lines.append(redacted_line)
 
     return "\n".join(redacted_lines)
+
+
+def _redact_secret(secret: str) -> str:
+    """Redact secret showing first 6 + last 4 characters."""
+    if len(secret) <= 10:
+        return "****"
+    return secret[:6] + "****" + secret[-4:]
 
 
 def run_validators(
@@ -269,6 +270,19 @@ def _get_default_registry() -> ValidatorRegistry:
         registry.register(AzureSASLiveValidator())
     except ImportError:
         # Additional validators not available, continue with defaults
+        pass
+
+    # Import and register live validators
+    try:
+        from .live_validators import (
+            GitHubPATLiveValidator,
+            AWSAccessKeyLiveValidator,
+        )
+
+        registry.register(GitHubPATLiveValidator())
+        registry.register(AWSAccessKeyLiveValidator())
+    except ImportError:
+        # Live validators not available, continue with defaults
         pass
 
     return registry

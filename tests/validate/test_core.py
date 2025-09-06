@@ -178,8 +178,8 @@ class TestRunValidators:
 
         # First call should work
         results1 = run_validators(finding, config)
-        # Should have results for 2 local Slack validators (both should work) + 2 network validators (skipped)
-        assert len(results1) == 4
+        # Should have results for 2 local Slack validators (both should work) + 4 network validators (skipped)
+        assert len(results1) == 6
         slack_results = [r for r in results1 if "slack_webhook" in r.validator_name]
         assert len(slack_results) == 2
         assert all(r.state == ValidationState.VALID for r in slack_results)
@@ -189,7 +189,7 @@ class TestRunValidators:
 
         # Second call should be rate limited
         results2 = run_validators(finding, config)
-        assert len(results2) == 4  # All validators still run but get rate limited
+        assert len(results2) == 6  # All validators still run but get rate limited
         rate_limited_results = [
             r
             for r in results2
@@ -208,8 +208,8 @@ class TestRunValidators:
 
         results = run_validators(finding, config)
 
-        # Should have 4 validators: 2 Slack (local), 2 network (skipped)
-        assert len(results) == 4
+        # Should have 6 validators: 2 Slack (local), 4 network (skipped)
+        assert len(results) == 6
         slack_results = [
             r for r in results if r.validator_name == "slack_webhook_format"
         ]
@@ -256,8 +256,8 @@ class TestDefaultRegistry:
         registry = _get_default_registry()
         validators = registry.get_all()
 
-        # Should have 4 validators: original Slack + 3 new ones
-        assert len(validators) == 4
+        # Should have 6 validators: original Slack + 5 new ones
+        assert len(validators) == 6
 
         validator_names = [v.name for v in validators]
         expected_names = [
@@ -265,6 +265,8 @@ class TestDefaultRegistry:
             "slack_webhook_local",
             "gcp_sa_key_live",
             "azure_sas_live",
+            "github_pat_live",
+            "aws_ak_live",
         ]
 
         for name in expected_names:
