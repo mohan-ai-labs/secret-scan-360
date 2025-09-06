@@ -1,21 +1,18 @@
 {
-  "root": "/tmp/azure_test.env",
+  "root": "/home/runner/work/secret-scan-360/secret-scan-360/tokens.txt",
   "total": 1,
   "findings": [
     {
-      "id": "azure_sas",
-      "path": "/tmp/azure_test.env",
+      "id": "github_pat",
+      "path": "tokens.txt",
       "line": 1,
-      "match": "https://myaccount.blob.core.windows.net/container/blob?[SAS-TOKEN-REDACTED]",
+      "match": "github...2345",
       "severity": "high",
-      "reason": "Azure Storage SAS token detected (expires: 2023-01-01T00:00:00Z)",
-      "meta": {
-        "sas_expiry": "2023-01-01T00:00:00Z"
-      },
-      "category": "expired",
-      "confidence": 0.95,
+      "meta": {},
+      "category": "test",
+      "confidence": 0.3,
       "reasons": [
-        "offline:azure_sas_expired"
+        "entropy:sequential"
       ]
     }
   ],
